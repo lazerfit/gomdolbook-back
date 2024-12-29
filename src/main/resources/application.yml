@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: api
+  r2dbc:
+    url: r2dbc:pool:mysql://localhost:3306/gomdolbook
+    username: root
+    password: 11231123
+  datasource:
+    url: jdbc:mysql://localhost:3306/gomdolbook
+    username: root
+    password: 11231123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      default_batch_fetch_size: 20
+      format_sql: true
+      ddl-auto: create
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+  sql:
+    init:
+      mode: never
