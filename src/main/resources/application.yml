@@ -1,10 +1,6 @@
 spring:
   application:
     name: api
-  r2dbc:
-    url: r2dbc:pool:mysql://localhost:3306/gomdolbook
-    username: root
-    password: 11231123
   datasource:
     url: jdbc:mysql://localhost:3306/gomdolbook
     username: root
@@ -15,9 +11,18 @@ spring:
     hibernate:
       default_batch_fetch_size: 20
       format_sql: true
-      ddl-auto: create
+      ddl-auto: update
       naming:
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
   sql:
     init:
       mode: never
+logging:
+  level:
+    org:
+      springframework:
+        r2dbc: DEBUG
+api:
+  aladin:
+    baseUrl: http://www.aladin.co.kr/ttb/api/
+    ttbkey: ${ALADIN_TTB_KEY}

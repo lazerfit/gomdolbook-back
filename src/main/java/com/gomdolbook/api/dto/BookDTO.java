@@ -1,11 +1,11 @@
-package com.gomdolbook.api.bookinfo.dto;
+package com.gomdolbook.api.dto;
 
-import com.gomdolbook.api.bookinfo.Book;
+import com.gomdolbook.api.models.Book;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-public class BookInfoDTO {
+public class BookDTO {
 
     private final String title;
 
@@ -24,7 +24,7 @@ public class BookInfoDTO {
     private final String publisher;
 
     @Builder
-    public BookInfoDTO(String title, String author, String pubDate, String description,
+    public BookDTO(String title, String author, String pubDate, String description,
         String isbn13,
         String cover, String categoryName, String publisher) {
         this.title = title;
@@ -37,18 +37,18 @@ public class BookInfoDTO {
         this.publisher = publisher;
     }
 
-    public BookInfoDTO(AladinAPI aladinAPI) {
-        title = aladinAPI.items().getFirst().title();
-        author = aladinAPI.items().getFirst().author();
-        pubDate = aladinAPI.items().getFirst().pubDate();
-        description = aladinAPI.items().getFirst().description();
-        isbn13 = aladinAPI.items().getFirst().isbn13();
-        cover = aladinAPI.items().getFirst().cover();
-        categoryName = aladinAPI.items().getFirst().categoryName();
-        publisher = aladinAPI.items().getFirst().publisher();
+    public BookDTO(AladinAPI aladinAPI) {
+        title = aladinAPI.item().getFirst().title();
+        author = aladinAPI.item().getFirst().author();
+        pubDate = aladinAPI.item().getFirst().pubDate();
+        description = aladinAPI.item().getFirst().description();
+        isbn13 = aladinAPI.item().getFirst().isbn13();
+        cover = aladinAPI.item().getFirst().cover();
+        categoryName = aladinAPI.item().getFirst().categoryName();
+        publisher = aladinAPI.item().getFirst().publisher();
     }
 
-    public BookInfoDTO(Book book) {
+    public BookDTO(Book book) {
         title = book.getTitle();
         author = book.getAuthor();
         pubDate = book.getPubDate();

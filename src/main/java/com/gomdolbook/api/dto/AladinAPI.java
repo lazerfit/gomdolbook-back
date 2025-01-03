@@ -1,11 +1,11 @@
-package com.gomdolbook.api.bookinfo.dto;
+package com.gomdolbook.api.dto;
 
 import java.util.List;
 
 public record AladinAPI(int totalResults,
                         int startIndex,
                         int itemsPerPage,
-                        List<Item> items) {
+                        List<Item> item) {
 
     public record Item(String title,
                        String author,
