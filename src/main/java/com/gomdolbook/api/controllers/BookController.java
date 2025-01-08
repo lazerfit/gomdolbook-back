@@ -1,12 +1,20 @@
 package com.gomdolbook.api.controllers;
 
 import com.gomdolbook.api.dto.BookDTO;
+import com.gomdolbook.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.dto.ReadingLogDTO;
 import com.gomdolbook.api.service.BookService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -18,9 +26,21 @@ public class BookController {
 
     private final BookService bookService;
 
-    @GetMapping("/v1/book/{isbn}")
-    public Mono<BookDTO> getBook(@PathVariable String isbn) {
-        return bookService.getBook(isbn);
+    @GetMapping("/v1/readingLog/{isbn}")
+    public ResponseEntity<ReadingLogDTO> getBook(@PathVariable String isbn) {
+        return bookService.getReadingLog(isbn)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.status(404).build());
     }
 
+    @GetMapping("/v1/book/{isbn}")
+    public Mono<BookDTO> fetchItemFromAladin(@PathVariable String isbn) {
+        return bookService.fetchItemFromAladin(isbn);
+    }
+
+    @PostMapping("/v1/book/save")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void saveBook(@Validated @RequestBody BookSaveRequestDTO saveRequest) {
+        bookService.saveBook(saveRequest);
+    }
 }

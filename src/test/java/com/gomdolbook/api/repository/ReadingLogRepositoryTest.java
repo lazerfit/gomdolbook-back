@@ -1,4 +1,4 @@
-package com.gomdolbook.api.repository.jpa;
+package com.gomdolbook.api.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,14 +8,9 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.jdbc.Sql;
 
-@DataJpaTest(excludeAutoConfiguration = {R2dbcAutoConfiguration.class})
-@AutoConfigureDataJpa
-@Sql(scripts = {"/schema-jpa.sql"})
+@DataJpaTest
 class ReadingLogRepositoryTest {
 
     @Autowired
@@ -32,12 +27,7 @@ class ReadingLogRepositoryTest {
     @Test
     void saveReadingLog() {
         ReadingLog saved = readingLogRepository.save(
-            ReadingLog.builder()
-                .note1("1번 입니다.")
-                .note2("2번 입니다.")
-                .note3("3번 입니다.")
-                .status(Status.READING)
-                .build()
+            new ReadingLog(Status.READING,"1","2","3")
         );
 
         ReadingLog found = readingLogRepository.findById(saved.getId())

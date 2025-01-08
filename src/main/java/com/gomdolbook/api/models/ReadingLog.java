@@ -7,7 +7,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -39,7 +38,6 @@ public class ReadingLog {
     @Column
     private String note3;
 
-    @Builder
     public ReadingLog(Status status, String note1, String note2, String note3) {
         this.status = status;
         this.note1 = note1;

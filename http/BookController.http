@@ -1,3 +1,7 @@
-### 책 조회
+### 알라딘 책 조회
 GET http://localhost:8080/api/v1/book/9788936434120
+Content-Type: application/json
+
+### ReadingLog 조회
+GET http://localhost:8080/api/v1/readingLog/9788936434120
 Content-Type: application/json

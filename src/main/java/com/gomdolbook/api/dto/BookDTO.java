@@ -1,7 +1,6 @@
 package com.gomdolbook.api.dto;
 
 import com.gomdolbook.api.models.Book;
-import lombok.Builder;
 import lombok.Getter;
 
 @Getter
@@ -22,20 +21,6 @@ public class BookDTO {
     private final String categoryName;
 
     private final String publisher;
-
-    @Builder
-    public BookDTO(String title, String author, String pubDate, String description,
-        String isbn13,
-        String cover, String categoryName, String publisher) {
-        this.title = title;
-        this.author = author;
-        this.pubDate = pubDate;
-        this.description = description;
-        this.isbn13 = isbn13;
-        this.cover = cover;
-        this.categoryName = categoryName;
-        this.publisher = publisher;
-    }
 
     public BookDTO(AladinAPI aladinAPI) {
         title = aladinAPI.item().getFirst().title();

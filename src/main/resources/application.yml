@@ -17,11 +17,6 @@ spring:
   sql:
     init:
       mode: never
-logging:
-  level:
-    org:
-      springframework:
-        r2dbc: DEBUG
 api:
   aladin:
     baseUrl: http://www.aladin.co.kr/ttb/api/

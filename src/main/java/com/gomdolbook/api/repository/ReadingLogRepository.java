@@ -1,4 +1,4 @@
-package com.gomdolbook.api.repository.jpa;
+package com.gomdolbook.api.repository;
 
 import com.gomdolbook.api.models.ReadingLog;
 import org.springframework.data.jpa.repository.JpaRepository;

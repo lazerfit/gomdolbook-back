@@ -11,12 +11,10 @@ import jakarta.persistence.OneToOne;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.relational.core.mapping.Table;
 
 @Entity
 @NoArgsConstructor
 @Getter
-@Table
 public class Book {
 
     @Id
@@ -63,5 +61,9 @@ public class Book {
         this.cover = cover;
         this.categoryName = categoryName;
         this.publisher = publisher;
+    }
+
+    public void addReadingLog(ReadingLog readingLog) {
+        this.readingLog = readingLog;
     }
 }

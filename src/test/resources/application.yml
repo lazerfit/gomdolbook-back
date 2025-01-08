@@ -1,21 +1,9 @@
 spring:
   jpa:
     defer-datasource-initialization: true
-  r2dbc:
-    url: r2dbc:h2:mem:///testdb
-    username: sa
-    password:
-  datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  sql:
-    init:
-      mode: always
-      platform: h2
-logging:
-  level:
-    org:
-      springframework:
-        r2dbc: DEBUG
+    hibernate:
+      ddl-auto: none
+api:
+  aladin:
+    baseUrl: http://localhost
+    ttbkey: test_key
