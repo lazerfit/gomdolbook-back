@@ -9,14 +9,20 @@ import com.gomdolbook.api.dto.AladinAPI.Item;
 import com.gomdolbook.api.dto.BookDTO;
 import com.gomdolbook.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.dto.ReadingLogDTO;
+import com.gomdolbook.api.errors.BookNotFoundException;
+import com.gomdolbook.api.models.Book;
 import com.gomdolbook.api.models.ReadingLog.Status;
+import com.gomdolbook.api.repository.BookRepository;
 import java.io.IOException;
 import java.util.List;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,6 +45,9 @@ class BookServiceTest {
     @Autowired
     ObjectMapper objectMapper;
 
+    @Autowired
+    BookRepository bookRepository;
+
     @BeforeAll
     static void setUp() throws IOException {
         server = new MockWebServer();
@@ -48,6 +57,26 @@ class BookServiceTest {
     @AfterAll
     static void tearDown() throws IOException {
         server.shutdown();
+    }
+
+    @BeforeEach
+    void setup() {
+        Book book = Book.builder()
+            .title("소년이 온다")
+            .author("한강")
+            .pubDate("2014-05-19")
+            .description("노벨 문학상")
+            .isbn13("9788936434120")
+            .cover("image1")
+            .categoryName("노벨문학상")
+            .publisher("창비")
+            .build();
+        bookRepository.save(book);
+    }
+
+    @AfterEach
+    void teardown() {
+        bookRepository.deleteAll();
     }
 
     @DynamicPropertySource
@@ -72,7 +101,7 @@ class BookServiceTest {
 
         bookService.saveBook(requestDTO);
         BookDTO book = bookService.getBook("9788991290402");
-        ReadingLogDTO readingLog = bookService.getReadingLog("9788991290402").orElseThrow();
+        ReadingLogDTO readingLog = bookService.getReadingLog("9788991290402");
         assertThat(book.getAuthor()).isEqualTo("투퀴디데스");
         assertThat(readingLog.getStatus()).isEqualTo(Status.READING);
     }
@@ -98,5 +127,11 @@ class BookServiceTest {
 
         RecordedRequest request = server.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
+    }
+
+    @Test
+    void getBookError() {
+        Assertions.assertThrows(BookNotFoundException.class,
+            () -> bookService.getBook("11"));
     }
 }

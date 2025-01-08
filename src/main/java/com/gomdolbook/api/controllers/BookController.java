@@ -7,7 +7,6 @@ import com.gomdolbook.api.service.BookService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,10 +26,8 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping("/v1/readingLog/{isbn}")
-    public ResponseEntity<ReadingLogDTO> getBook(@PathVariable String isbn) {
-        return bookService.getReadingLog(isbn)
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.status(404).build());
+    public ReadingLogDTO getBook(@PathVariable String isbn) {
+        return bookService.getReadingLog(isbn);
     }
 
     @GetMapping("/v1/book/{isbn}")

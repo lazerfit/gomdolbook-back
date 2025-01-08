@@ -11,7 +11,6 @@ import com.gomdolbook.api.models.Book;
 import com.gomdolbook.api.models.ReadingLog;
 import com.gomdolbook.api.models.ReadingLog.Status;
 import com.gomdolbook.api.service.BookService;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +51,7 @@ class BookControllerUnitTest {
             .build();
         book.addReadingLog(readingLog);
         ReadingLogDTO readingLogDTO = new ReadingLogDTO(book);
-        Mockito.when(bookService.getReadingLog("testIsbn")).thenReturn(Optional.of(readingLogDTO));
+        Mockito.when(bookService.getReadingLog("testIsbn")).thenReturn(readingLogDTO);
 
         mockMvc.perform(get("/api/v1/readingLog/testIsbn")
             .contentType(MediaType.APPLICATION_JSON))

@@ -4,13 +4,13 @@ import com.gomdolbook.api.dto.AladinAPI;
 import com.gomdolbook.api.dto.BookDTO;
 import com.gomdolbook.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.dto.ReadingLogDTO;
+import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.models.Book;
 import com.gomdolbook.api.models.ReadingLog;
 import com.gomdolbook.api.models.ReadingLog.Status;
 import com.gomdolbook.api.repository.BookRepository;
 import com.gomdolbook.api.repository.ReadingLogRepository;
 import java.time.Duration;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,16 +34,17 @@ public class BookService {
     private String ttbkey;
 
     @Transactional(readOnly = true)
-    public Optional<ReadingLogDTO> getReadingLog(String isbn13) {
+    public ReadingLogDTO getReadingLog(String isbn13) {
 
-        return bookRepository.findByIsbn13(isbn13).map(ReadingLogDTO::new);
+        return bookRepository.findByIsbn13(isbn13).map(ReadingLogDTO::new)
+            .orElseThrow(() -> new BookNotFoundException(isbn13));
     }
 
     @Transactional(readOnly = true)
     public BookDTO getBook(String isbn13) {
 
         return bookRepository.findByIsbn13(isbn13).map(BookDTO::new)
-            .orElseThrow(() -> new RuntimeException("해당 도서가 존재하지 않습니다."));
+            .orElseThrow(() -> new BookNotFoundException(isbn13));
     }
 
     public Mono<BookDTO> fetchItemFromAladin(String isbn13) {
