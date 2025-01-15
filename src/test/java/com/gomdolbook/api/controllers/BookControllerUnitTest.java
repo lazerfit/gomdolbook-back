@@ -5,11 +5,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.gomdolbook.api.dto.BookDTO;
-import com.gomdolbook.api.dto.ReadingLogDTO;
-import com.gomdolbook.api.models.Book;
-import com.gomdolbook.api.models.ReadingLog;
-import com.gomdolbook.api.models.ReadingLog.Status;
+import com.gomdolbook.api.api.controllers.BookController;
+import com.gomdolbook.api.api.dto.BookDTO;
+import com.gomdolbook.api.api.dto.ReadingLogDTO;
+import com.gomdolbook.api.persistence.entity.Book;
+import com.gomdolbook.api.persistence.entity.ReadingLog;
+import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import com.gomdolbook.api.service.BookService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -56,13 +57,13 @@ class BookControllerUnitTest {
         mockMvc.perform(get("/api/v1/readingLog/testIsbn")
             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.title").value("펠로폰네소스 전쟁사"))
-            .andExpect(jsonPath("$.status").value("READING"))
+            .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
+            .andExpect(jsonPath("$.data.status").value("READING"))
             .andDo(print());
     }
 
     @Test
-    void getBookFromAPI() throws Exception {
+    void getBookFromAPI() {
         Book book = Book.builder()
             .title("펠로폰네소스 전쟁사")
             .author("투퀴디데스")
@@ -81,8 +82,18 @@ class BookControllerUnitTest {
             .exchange()
             .expectStatus().isOk()
             .expectBody()
-            .jsonPath("$.title").isEqualTo("펠로폰네소스 전쟁사");
+            .jsonPath("$.data.title").isEqualTo("펠로폰네소스 전쟁사");
 
+    }
+
+    @Test
+    void getStatus() throws Exception {
+        Mockito.when(bookService.getStatus("isbn")).thenReturn("NEW");
+
+        mockMvc.perform(get("/api/v1/status/isbn"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data").value("NEW"))
+            .andDo(print());
     }
 
 }

@@ -2,8 +2,10 @@ package com.gomdolbook.api.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.gomdolbook.api.models.ReadingLog;
-import com.gomdolbook.api.models.ReadingLog.Status;
+import com.gomdolbook.api.persistence.entity.ReadingLog;
+import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.gomdolbook.api.persistence.repository.BookRepository;
+import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

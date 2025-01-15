@@ -8,14 +8,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gomdolbook.api.dto.AladinAPI;
-import com.gomdolbook.api.dto.AladinAPI.Item;
-import com.gomdolbook.api.dto.BookSaveRequestDTO;
-import com.gomdolbook.api.models.Book;
-import com.gomdolbook.api.models.ReadingLog;
-import com.gomdolbook.api.models.ReadingLog.Status;
-import com.gomdolbook.api.repository.BookRepository;
-import com.gomdolbook.api.repository.ReadingLogRepository;
+import com.gomdolbook.api.api.dto.AladinAPI;
+import com.gomdolbook.api.api.dto.AladinAPI.Item;
+import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.persistence.entity.Book;
+import com.gomdolbook.api.persistence.entity.ReadingLog;
+import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.gomdolbook.api.persistence.repository.BookRepository;
+import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import java.io.IOException;
 import java.util.List;
 import okhttp3.mockwebserver.MockResponse;
@@ -117,7 +117,7 @@ class BookControllerTest {
             .exchange()
             .expectStatus().isOk()
             .expectBody()
-            .jsonPath("$.title").isEqualTo("소년이 온다");
+            .jsonPath("$.data.title").isEqualTo("소년이 온다");
     }
 
 
@@ -126,8 +126,8 @@ class BookControllerTest {
         mockMvc.perform(get("/api/v1/readingLog/9788991290402")
             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.title").value("펠로폰네소스 전쟁사"))
-            .andExpect(jsonPath("$.author").value("투퀴디데스"))
+            .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
+            .andExpect(jsonPath("$.data.author").value("투퀴디데스"))
             .andDo(print());
 
     }

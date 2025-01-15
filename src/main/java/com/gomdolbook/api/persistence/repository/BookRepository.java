@@ -1,6 +1,6 @@
-package com.gomdolbook.api.repository;
+package com.gomdolbook.api.persistence.repository;
 
-import com.gomdolbook.api.models.Book;
+import com.gomdolbook.api.persistence.entity.Book;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

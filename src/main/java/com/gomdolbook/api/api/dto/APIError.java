@@ -1,6 +1,6 @@
-package com.gomdolbook.api.dto;
+package com.gomdolbook.api.api.dto;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -18,6 +18,6 @@ public class APIError {
 
     public APIError(HttpStatus status, String errors) {
         this.status = status;
-        this.errors = Arrays.asList(errors);
+        this.errors = Collections.singletonList(errors);
     }
 }

@@ -1,7 +1,7 @@
-package com.gomdolbook.api.dto;
+package com.gomdolbook.api.api.dto;
 
-import com.gomdolbook.api.models.Book;
-import com.gomdolbook.api.models.ReadingLog.Status;
+import com.gomdolbook.api.persistence.entity.Book;
+import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import lombok.Getter;
 
 @Getter

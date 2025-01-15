@@ -1,4 +1,4 @@
-package com.gomdolbook.api.models;
+package com.gomdolbook.api.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

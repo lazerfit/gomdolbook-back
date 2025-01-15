@@ -1,6 +1,6 @@
 package com.gomdolbook.api.config;
 
-import com.gomdolbook.api.dto.APIError;
+import com.gomdolbook.api.api.dto.APIError;
 import com.gomdolbook.api.errors.BookNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;

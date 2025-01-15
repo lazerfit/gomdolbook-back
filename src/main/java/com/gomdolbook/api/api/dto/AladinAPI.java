@@ -1,4 +1,4 @@
-package com.gomdolbook.api.dto;
+package com.gomdolbook.api.api.dto;
 
 import java.util.List;
 

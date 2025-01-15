@@ -4,17 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gomdolbook.api.dto.AladinAPI;
-import com.gomdolbook.api.dto.AladinAPI.Item;
-import com.gomdolbook.api.dto.BookDTO;
-import com.gomdolbook.api.dto.BookSaveRequestDTO;
-import com.gomdolbook.api.dto.ReadingLogDTO;
+import com.gomdolbook.api.api.dto.AladinAPI;
+import com.gomdolbook.api.api.dto.AladinAPI.Item;
+import com.gomdolbook.api.api.dto.BookDTO;
+import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.ReadingLogDTO;
 import com.gomdolbook.api.errors.BookNotFoundException;
-import com.gomdolbook.api.models.Book;
-import com.gomdolbook.api.models.ReadingLog.Status;
-import com.gomdolbook.api.repository.BookRepository;
+import com.gomdolbook.api.persistence.entity.Book;
+import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.gomdolbook.api.persistence.repository.BookRepository;
+import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import java.io.IOException;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -35,6 +38,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@Slf4j
 class BookServiceTest {
 
     static MockWebServer server;
@@ -47,6 +51,9 @@ class BookServiceTest {
 
     @Autowired
     BookRepository bookRepository;
+
+    @Autowired
+    ReadingLogRepository readingLogRepository;
 
     @BeforeAll
     static void setUp() throws IOException {
@@ -133,5 +140,22 @@ class BookServiceTest {
     void getBookError() {
         Assertions.assertThrows(BookNotFoundException.class,
             () -> bookService.getBook("11"));
+    }
+
+    @Test
+    void getBook() {
+        BookDTO book = bookService.getBook("9788936434120");
+        assertThat(book.getTitle()).isEqualTo("소년이 온다");
+    }
+
+    @Test
+    void aopInfo() {
+        log.info("isAopProxy, BookService={}", AopUtils.isAopProxy(bookService));
+    }
+
+    @Test
+    void getStatus() {
+        String status = bookService.getStatus("9788991290402");
+        assertThat(status).isEqualTo("NEW");
     }
 }

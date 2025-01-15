@@ -1,25 +1,30 @@
 package com.gomdolbook.api.service;
 
-import com.gomdolbook.api.dto.AladinAPI;
-import com.gomdolbook.api.dto.BookDTO;
-import com.gomdolbook.api.dto.BookSaveRequestDTO;
-import com.gomdolbook.api.dto.ReadingLogDTO;
+import com.gomdolbook.api.api.dto.AladinAPI;
+import com.gomdolbook.api.api.dto.BookDTO;
+import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.ReadingLogDTO;
 import com.gomdolbook.api.errors.BookNotFoundException;
-import com.gomdolbook.api.models.Book;
-import com.gomdolbook.api.models.ReadingLog;
-import com.gomdolbook.api.models.ReadingLog.Status;
-import com.gomdolbook.api.repository.BookRepository;
-import com.gomdolbook.api.repository.ReadingLogRepository;
+import com.gomdolbook.api.models.BookModel;
+import com.gomdolbook.api.persistence.entity.Book;
+import com.gomdolbook.api.persistence.entity.ReadingLog;
+import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.gomdolbook.api.persistence.repository.BookRepository;
+import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import java.time.Duration;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClientRequest;
+import reactor.util.retry.Retry;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +46,12 @@ public class BookService {
     }
 
     @Transactional(readOnly = true)
+    public String getStatus(String isbn13) {
+        Optional<Book> book = bookRepository.findByIsbn13(isbn13);
+        return book.map(value -> value.getReadingLog().getStatus().name()).orElse("NEW");
+    }
+
+    @Transactional(readOnly = true)
     public BookDTO getBook(String isbn13) {
 
         return bookRepository.findByIsbn13(isbn13).map(BookDTO::new)
@@ -59,7 +70,7 @@ public class BookService {
                 .queryParam("Version", "20131101").build())
             .httpRequest(httpRequest -> {
                 HttpClientRequest httpClientRequest = httpRequest.getNativeRequest();
-                httpClientRequest.responseTimeout(Duration.ofSeconds(30));
+                httpClientRequest.responseTimeout(Duration.ofSeconds(5));
             })
             .retrieve()
             .onStatus(HttpStatusCode::is4xxClientError,
@@ -75,7 +86,10 @@ public class BookService {
                         new RuntimeException("Failed to fetch book item: Server Side"));
                 })
             .bodyToMono(AladinAPI.class)
-            .map(BookDTO::new);
+            .retryWhen(Retry.fixedDelay(1, Duration.ofSeconds(2))
+                .doBeforeRetry(
+                    retrySignal -> log.info("[retry] {}", retrySignal.toString())))
+            .map(BookModel::convertBookDTO);
     }
 
     @Transactional
@@ -105,7 +119,7 @@ public class BookService {
         try {
             return Status.valueOf(statusString.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("잘못된 Status 값입니다. : " + statusString);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 Status 값입니다. : " + statusString);
         }
     }
 
