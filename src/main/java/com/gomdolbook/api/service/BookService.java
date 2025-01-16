@@ -11,8 +11,11 @@ import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
+import java.net.URI;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClientRequest;
 import reactor.util.retry.Retry;
@@ -60,14 +64,29 @@ public class BookService {
 
     public Mono<BookDTO> fetchItemFromAladin(String isbn13) {
 
+        return executeFetchAladinRequest("ItemLookUp.aspx",uriBuilder -> uriBuilder
+            .queryParam("ttbkey", ttbkey)
+            .queryParam("ItemIdType", "ISBN13")
+            .queryParam("ItemId", isbn13)
+            .queryParam("Cover", "MidBig")
+            .queryParam("Output", "JS")
+            .queryParam("Version", "20131101").build())
+            .map(BookModel::convertBookDTO);
+    }
+
+    public Mono<List<BookDTO>> searchBookFromAladin(String query) {
+        return executeFetchAladinRequest("ItemSearch.aspx", uriBuilder -> uriBuilder
+            .queryParam("ttbkey", ttbkey)
+            .queryParam("Query", query)
+            .queryParam("Cover", "MidBig")
+            .queryParam("Output", "JS")
+            .queryParam("Version", "20131101").build())
+            .map(aladinAPI -> aladinAPI.item().stream().map(BookModel::convertBookDTO).toList());
+    }
+
+    private Mono<AladinAPI> executeFetchAladinRequest(String uri, Function<UriBuilder, URI> uriBuilder) {
         return webClient.get()
-            .uri("ItemLookUp.aspx", uriBuilder -> uriBuilder
-                .queryParam("ttbkey", ttbkey)
-                .queryParam("ItemIdType", "ISBN13")
-                .queryParam("ItemId", isbn13)
-                .queryParam("Cover", "MidBig")
-                .queryParam("Output", "JS")
-                .queryParam("Version", "20131101").build())
+            .uri(uri, uriBuilder)
             .httpRequest(httpRequest -> {
                 HttpClientRequest httpClientRequest = httpRequest.getNativeRequest();
                 httpClientRequest.responseTimeout(Duration.ofSeconds(5));
@@ -88,8 +107,7 @@ public class BookService {
             .bodyToMono(AladinAPI.class)
             .retryWhen(Retry.fixedDelay(1, Duration.ofSeconds(2))
                 .doBeforeRetry(
-                    retrySignal -> log.info("[retry] {}", retrySignal.toString())))
-            .map(BookModel::convertBookDTO);
+                    retrySignal -> log.info("[retry] {}", retrySignal.toString())));
     }
 
     @Transactional

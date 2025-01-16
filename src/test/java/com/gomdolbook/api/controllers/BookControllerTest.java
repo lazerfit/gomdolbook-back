@@ -120,6 +120,29 @@ class BookControllerTest {
             .jsonPath("$.data.title").isEqualTo("소년이 온다");
     }
 
+    @Test
+    void searchBook() throws Exception {
+        String response = objectMapper.writeValueAsString(new AladinAPI(1, 1, 1,
+            List.of(new Item("소년이 온다", "한강", "2014-05-19", "2024 노벨문학상",
+                "9788936434120", "image1", "노벨문학상",
+                "창비"), new Item("소년이 온다1", "한강1", "2014-06-19", "2025 노벨문학상",
+                "97889364341201", "image11", "노벨문학상1",
+                "창비1"))));
+
+        server.enqueue(
+            new MockResponse().setResponseCode(200)
+                .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .setBody(response)
+        );
+
+        webTestClient.get().uri(uriBuilder -> uriBuilder
+                .path("/api/v1/book/search")
+                .queryParam("q", "글쓰기").build())
+            .exchange()
+            .expectBody()
+            .jsonPath("$.data[0].title").isEqualTo("소년이 온다");
+    }
+
 
     @Test
     void getReadingLog() throws Exception {

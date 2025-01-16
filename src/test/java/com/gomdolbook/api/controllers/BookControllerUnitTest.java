@@ -12,6 +12,7 @@ import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import com.gomdolbook.api.service.BookService;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +85,24 @@ class BookControllerUnitTest {
             .expectBody()
             .jsonPath("$.data.title").isEqualTo("펠로폰네소스 전쟁사");
 
+    }
+
+    @Test
+    void searchBook() {
+        List<BookDTO> dtoList = List.of(new BookDTO("소년이 온다", "한강", "2014-05-19", "2024 노벨문학상",
+            "9788936434120", "image1", "노벨문학상",
+            "창비"), new BookDTO("소년이 온다1", "한강1", "2014-06-19", "2025 노벨문학상",
+            "97889364341201", "image11", "노벨문학상1",
+            "창비1"));
+
+        Mockito.when(bookService.searchBookFromAladin("글쓰기")).thenReturn(Mono.just(dtoList));
+
+        webTestClient.get().uri(uriBuilder -> uriBuilder
+            .path("/api/v1/book/search")
+            .queryParam("q", "글쓰기").build())
+            .exchange()
+            .expectBody()
+            .jsonPath("$.item[0].title").isEqualTo("소년이 온다");
     }
 
     @Test

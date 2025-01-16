@@ -6,6 +6,7 @@ import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookResponseDTO;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import java.util.List;
 
 public class BookModel {
 
@@ -36,6 +37,23 @@ public class BookModel {
             .categoryName(item.categoryName())
             .publisher(item.publisher())
             .build();
+    }
+
+    public static BookDTO convertBookDTO(Item item) {
+        return BookDTO.builder()
+            .title(item.title())
+            .author(item.author())
+            .pubDate(item.pubDate())
+            .description(item.description())
+            .isbn13(item.isbn13())
+            .cover(item.cover())
+            .categoryName(item.categoryName())
+            .publisher(item.publisher())
+            .build();
+    }
+
+    public static List<BookDTO> convertListBookDTO(AladinAPI aladinAPI) {
+        return aladinAPI.item().stream().map(BookModel::convertBookDTO).toList();
     }
 
     public static BookResponseDTO convertBookResponseDTO(AladinAPI aladinAPI, Status status) {
