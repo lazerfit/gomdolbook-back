@@ -6,7 +6,7 @@ import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
 import com.gomdolbook.api.api.dto.ReadingLogDTO;
 import com.gomdolbook.api.config.annotations.PreAuthorizeWithContainsUser;
-import com.gomdolbook.api.config.annotations.PreAuthorizeWithEmail;
+import com.gomdolbook.api.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.models.BookModel;
 import com.gomdolbook.api.persistence.entity.Book;
@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -50,7 +49,7 @@ public class BookService {
     @Value("${api.aladin.ttbkey}")
     private String ttbkey;
 
-    @PreAuthorizeWithEmail
+    @UserCheckAndSave
     public String test(String email) {
         return "logged in";
     }
@@ -62,12 +61,12 @@ public class BookService {
             .orElseThrow(() -> new BookNotFoundException(isbn13));
     }
 
-    @PreAuthorize("authentication.principal.getClaim('email') == #email")
+    @UserCheckAndSave
     @Transactional
     public void getReadingLogV2(String email, String isbn) {
         Book book = bookRepository.findByIsbn13(isbn).orElseThrow();
         ReadingLog readingLog = book.getReadingLog();
-        User user = userService.findByEmail(email);
+        Optional<User> user = userService.findByEmail(email);
     }
 
     @Transactional(readOnly = true)
@@ -83,6 +82,7 @@ public class BookService {
             .orElseThrow(() -> new BookNotFoundException(isbn13));
     }
 
+    @PreAuthorizeWithContainsUser
     public Mono<BookDTO> fetchItemFromAladin(String isbn13) {
 
         return executeFetchAladinRequest("ItemLookUp.aspx",uriBuilder -> uriBuilder

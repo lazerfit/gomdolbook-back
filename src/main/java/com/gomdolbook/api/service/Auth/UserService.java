@@ -2,6 +2,7 @@ package com.gomdolbook.api.service.Auth;
 
 import com.gomdolbook.api.persistence.entity.User;
 import com.gomdolbook.api.persistence.repository.UserRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email).orElseThrow();
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 }
