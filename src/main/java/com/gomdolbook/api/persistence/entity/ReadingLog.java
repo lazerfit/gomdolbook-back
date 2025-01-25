@@ -4,9 +4,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -38,10 +41,22 @@ public class ReadingLog {
     @Column
     private String note3;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "USER_ID")
+    private User user;
+
     public ReadingLog(Status status, String note1, String note2, String note3) {
         this.status = status;
         this.note1 = note1;
         this.note2 = note2;
         this.note3 = note3;
+    }
+
+    public void setUser(User user) {
+        if (this.user != null) {
+            this.user.getReadingLogs().remove(this);
+        }
+        this.user = user;
+        user.getReadingLogs().add(this);
     }
 }

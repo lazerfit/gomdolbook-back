@@ -7,13 +7,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
 import com.gomdolbook.api.api.dto.BookDTO;
-import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
 import com.gomdolbook.api.api.dto.ReadingLogDTO;
 import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.persistence.entity.Book;
+import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.gomdolbook.api.persistence.entity.User;
+import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
+import com.gomdolbook.api.persistence.repository.UserRepository;
 import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -32,11 +36,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+@WithMockUser(roles = "user")
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Slf4j
 class BookServiceTest {
@@ -54,6 +63,12 @@ class BookServiceTest {
 
     @Autowired
     ReadingLogRepository readingLogRepository;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     @BeforeAll
     static void setUp() throws IOException {
@@ -92,9 +107,15 @@ class BookServiceTest {
         registry.add("api.aladin.ttbkey", () -> "test_key");
     }
 
+    @Transactional
     @Test
-    void saveBookAndReadingLog() {
-        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
+    void getReadingLog() {
+        User user = new User("user", "img", Role.USER);
+        userRepository.save(user);
+        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
+        readingLogRepository.save(readingLog);
+        readingLog.setUser(user);
+        Book book = Book.builder()
             .title("펠로폰네소스 전쟁사")
             .author("투퀴디데스")
             .pubDate("2011-06-30")
@@ -103,14 +124,13 @@ class BookServiceTest {
             .cover("image")
             .categoryName("서양고대사")
             .publisher("도서출판 숲")
-            .status("READING")
             .build();
+        book.addReadingLog(readingLog);
+        bookRepository.save(book);
 
-        bookService.saveBook(requestDTO);
-        BookDTO book = bookService.getBook("9788991290402");
-        ReadingLogDTO readingLog = bookService.getReadingLog("9788991290402");
-        assertThat(book.getAuthor()).isEqualTo("투퀴디데스");
-        assertThat(readingLog.getStatus()).isEqualTo(Status.READING);
+        ReadingLogDTO readingLogDTO = bookService.getReadingLog("9788991290402");
+        assertThat(readingLogDTO.getAuthor()).isEqualTo("투퀴디데스");
+        assertThat(user.getReadingLogs().getFirst().getNote1()).isEqualTo("1");
     }
 
     @Test
@@ -151,10 +171,10 @@ class BookServiceTest {
                 .setBody(response)
         );
 
-        Mono<List<BookDTO>> list = bookService.searchBookFromAladin("글쓰기");
+        Mono<List<BookSearchResponseDTO>> list = bookService.searchBookFromAladin("글쓰기");
 
         StepVerifier.create(list)
-            .expectNextMatches(book -> book.getLast().getTitle().equals("소년이 온다1"))
+            .expectNextMatches(book -> book.getLast().title().equals("소년이 온다1"))
             .verifyComplete();
 
         RecordedRequest request = server.takeRequest();

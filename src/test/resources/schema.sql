@@ -1,3 +1,10 @@
+create table IF NOT EXISTS users (
+                    user_id bigint auto_increment primary key,
+                    email varchar(255) not null,
+                    picture varchar(255) not null,
+                    role varchar(20)
+);
+
 create table IF NOT EXISTS reading_log
 (
     readinglog_id bigint auto_increment
@@ -5,7 +12,10 @@ create table IF NOT EXISTS reading_log
     note1         varchar(255)                            null,
     note2         varchar(255)                            null,
     note3         varchar(255)                            null,
-    status        enum ('FINISHED', 'READING', 'TO_READ') null
+    status        enum ('FINISHED', 'READING', 'TO_READ') null,
+    user_id       bigint                                  null,
+    constraint FKREADINGLOGUSERS
+        foreign key (user_id) references users (user_id)
 );
 
 create table IF NOT EXISTS book

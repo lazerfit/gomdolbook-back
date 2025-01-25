@@ -4,6 +4,7 @@ import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookResponseDTO;
+import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import java.util.List;
@@ -52,8 +53,24 @@ public class BookModel {
             .build();
     }
 
+    public static BookSearchResponseDTO convertBookSearchResponseDTO(Item item) {
+        return BookSearchResponseDTO.builder()
+            .title(item.title())
+            .author(item.author())
+            .pubDate(item.pubDate())
+            .description(item.description())
+            .isbn13(item.isbn13())
+            .cover(item.cover())
+            .publisher(item.publisher())
+            .build();
+    }
+
     public static List<BookDTO> convertListBookDTO(AladinAPI aladinAPI) {
         return aladinAPI.item().stream().map(BookModel::convertBookDTO).toList();
+    }
+
+    public static List<BookSearchResponseDTO> convertListBookSearchResponseDTO(AladinAPI aladinAPI) {
+        return aladinAPI.item().stream().map(BookModel::convertBookSearchResponseDTO).toList();
     }
 
     public static BookResponseDTO convertBookResponseDTO(AladinAPI aladinAPI, Status status) {

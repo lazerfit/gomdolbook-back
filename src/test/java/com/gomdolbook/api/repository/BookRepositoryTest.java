@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.gomdolbook.api.persistence.entity.User;
+import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -41,6 +43,7 @@ class BookRepositoryTest {
 
     @Test
     void saveBook() {
+        User user = new User("user", "img", Role.USER);
         ReadingLog readingLog = readingLogRepository.save(
             new ReadingLog(Status.READING, "1", "2", "3"));
         Book book = getMockBook();

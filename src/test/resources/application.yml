@@ -3,6 +3,12 @@ spring:
     defer-datasource-initialization: true
     hibernate:
       ddl-auto: none
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/gomdolbook
+          audiences: gomdolbook
 api:
   aladin:
     baseUrl: http://localhost

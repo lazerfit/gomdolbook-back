@@ -3,14 +3,19 @@ package com.gomdolbook.api.service;
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
 import com.gomdolbook.api.api.dto.ReadingLogDTO;
+import com.gomdolbook.api.config.annotations.PreAuthorizeWithContainsUser;
+import com.gomdolbook.api.config.annotations.PreAuthorizeWithEmail;
 import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.models.BookModel;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.gomdolbook.api.persistence.entity.User;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
+import com.gomdolbook.api.service.Auth.UserService;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
@@ -21,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -30,23 +36,38 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClientRequest;
 import reactor.util.retry.Retry;
 
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final UserService userService;
     private final WebClient webClient;
     private final ReadingLogRepository readingLogRepository;
 
     @Value("${api.aladin.ttbkey}")
     private String ttbkey;
 
+    @PreAuthorizeWithEmail
+    public String test(String email) {
+        return "logged in";
+    }
+
     @Transactional(readOnly = true)
     public ReadingLogDTO getReadingLog(String isbn13) {
 
         return bookRepository.findByIsbn13(isbn13).map(ReadingLogDTO::new)
             .orElseThrow(() -> new BookNotFoundException(isbn13));
+    }
+
+    @PreAuthorize("authentication.principal.getClaim('email') == #email")
+    @Transactional
+    public void getReadingLogV2(String email, String isbn) {
+        Book book = bookRepository.findByIsbn13(isbn).orElseThrow();
+        ReadingLog readingLog = book.getReadingLog();
+        User user = userService.findByEmail(email);
     }
 
     @Transactional(readOnly = true)
@@ -74,14 +95,15 @@ public class BookService {
             .map(BookModel::convertBookDTO);
     }
 
-    public Mono<List<BookDTO>> searchBookFromAladin(String query) {
+    @PreAuthorizeWithContainsUser
+    public Mono<List<BookSearchResponseDTO>> searchBookFromAladin(String query) {
         return executeFetchAladinRequest("ItemSearch.aspx", uriBuilder -> uriBuilder
             .queryParam("ttbkey", ttbkey)
             .queryParam("Query", query)
             .queryParam("Cover", "MidBig")
             .queryParam("Output", "JS")
             .queryParam("Version", "20131101").build())
-            .map(aladinAPI -> aladinAPI.item().stream().map(BookModel::convertBookDTO).toList());
+            .map(BookModel::convertListBookSearchResponseDTO);
     }
 
     private Mono<AladinAPI> executeFetchAladinRequest(String uri, Function<UriBuilder, URI> uriBuilder) {
@@ -123,11 +145,11 @@ public class BookService {
             .publisher(requestDTO.publisher())
             .build();
 
-        ReadingLog readingLog = new ReadingLog(validateAndConvertStatus(requestDTO.status()), "",
-            "", "");
-
-        ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
-        book.addReadingLog(savedReadingLog);
+//        ReadingLog readingLog = new ReadingLog(validateAndConvertStatus(requestDTO.status()), "",
+//            "", "");
+//
+//        ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
+//        book.addReadingLog(savedReadingLog);
 
         bookRepository.save(book);
     }

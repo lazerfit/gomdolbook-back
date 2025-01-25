@@ -3,6 +3,7 @@ package com.gomdolbook.api.api.controllers;
 import com.gomdolbook.api.api.dto.APIResponseDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
 import com.gomdolbook.api.api.dto.ReadingLogDTO;
 import com.gomdolbook.api.service.BookService;
 import java.util.List;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,7 +24,6 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-@RequestMapping("/api")
 public class BookController {
 
     private final BookService bookService;
@@ -50,7 +49,7 @@ public class BookController {
     }
 
     @GetMapping("/v1/book/search")
-    public Mono<APIResponseDTO<List<BookDTO>>> searchBook(@RequestParam(name = "q") String q) {
+    public Mono<APIResponseDTO<List<BookSearchResponseDTO>>> searchBook(@RequestParam(name = "q") String q) {
         return bookService.searchBookFromAladin(q).map(APIResponseDTO::new);
     }
 
@@ -58,5 +57,10 @@ public class BookController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveBook(@Validated @RequestBody BookSaveRequestDTO saveRequest) {
         bookService.saveBook(saveRequest);
+    }
+
+    @GetMapping("/test/{email}")
+    public String test(@PathVariable String email) {
+        return bookService.test(email);
     }
 }

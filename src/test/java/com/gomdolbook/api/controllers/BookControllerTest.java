@@ -11,9 +11,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.gomdolbook.api.persistence.entity.User;
+import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import java.io.IOException;
@@ -37,6 +40,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.servlet.MockMvc;
 
+@WithMockCustomUser
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @AutoConfigureWebTestClient
@@ -71,7 +75,8 @@ class BookControllerTest {
     }
 
     @BeforeEach
-    void setup() {
+    void setup1() {
+        User user = new User("user", "img", Role.USER);
         ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
         readingLogRepository.save(readingLog);
         Book book = Book.builder()
@@ -113,7 +118,7 @@ class BookControllerTest {
                 .setBody(response)
         );
 
-        webTestClient.get().uri("/api/v1/book/9788936434120")
+        webTestClient.get().uri("/v1/book/9788936434120")
             .exchange()
             .expectStatus().isOk()
             .expectBody()
@@ -136,7 +141,7 @@ class BookControllerTest {
         );
 
         webTestClient.get().uri(uriBuilder -> uriBuilder
-                .path("/api/v1/book/search")
+                .path("/v1/book/search")
                 .queryParam("q", "글쓰기").build())
             .exchange()
             .expectBody()
@@ -146,7 +151,7 @@ class BookControllerTest {
 
     @Test
     void getReadingLog() throws Exception {
-        mockMvc.perform(get("/api/v1/readingLog/9788991290402")
+        mockMvc.perform(get("/v1/readingLog/9788991290402")
             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
@@ -157,7 +162,7 @@ class BookControllerTest {
 
     @Test
     void getReadingLog_return_error() throws Exception {
-        mockMvc.perform(get("/api/v1/readingLog/111")
+        mockMvc.perform(get("/v1/readingLog/111")
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().is4xxClientError());
     }
@@ -176,7 +181,7 @@ class BookControllerTest {
             .status("READING")
             .build();
 
-        mockMvc.perform(post("/api/v1/book/save")
+        mockMvc.perform(post("/v1/book/save")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDTO)))
             .andExpect(status().isNoContent())
@@ -197,7 +202,7 @@ class BookControllerTest {
             .status("READING")
             .build();
 
-        mockMvc.perform(post("/api/v1/book/save")
+        mockMvc.perform(post("/v1/book/save")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(requestDTO)))
             .andExpect(status().is4xxClientError())
@@ -208,7 +213,7 @@ class BookControllerTest {
 
     @Test
     void HttpRequestMethodNotSupportedException() throws Exception {
-        mockMvc.perform(post("/api/v1/readingLog/11"))
+        mockMvc.perform(post("/v1/readingLog/11"))
             .andExpect(status().is4xxClientError())
             .andExpect(jsonPath("$.errors").value(
                 "POST method is not supported for this request. Supported methods are GET "))
@@ -217,7 +222,7 @@ class BookControllerTest {
 
     @Test
     void DefaultHandler() throws Exception {
-        mockMvc.perform(get("/api/v1/readingLog/"))
+        mockMvc.perform(get("/v1/readingLog/"))
             .andExpect(status().is5xxServerError())
             .andExpect(jsonPath("$.errors").value("error occurred"))
             .andDo(print());
@@ -225,7 +230,7 @@ class BookControllerTest {
 
     @Test
     void BookNotFound() throws Exception {
-        mockMvc.perform(get("/api/v1/readingLog/1234"))
+        mockMvc.perform(get("/v1/readingLog/1234"))
             .andExpect(status().is4xxClientError())
             .andExpect(jsonPath("$.errors").value("Can't find Book: 1234"))
             .andDo(print());

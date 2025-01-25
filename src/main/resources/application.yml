@@ -1,3 +1,6 @@
+server:
+  servlet:
+    context-path: /api
 spring:
   application:
     name: api
@@ -17,7 +20,20 @@ spring:
   sql:
     init:
       mode: never
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/gomdolbook
+          audiences: gomdolbook
 api:
   aladin:
     baseUrl: http://www.aladin.co.kr/ttb/api/
     ttbkey: ${ALADIN_TTB_KEY}
+jwt:
+  token:
+    secret: ${JWT_SECRET}
+oauth:
+  github:
+    clientId: ${GITHUB_ID}
+    clientSecret: ${GITHUB_SECRET}

@@ -15,7 +15,7 @@ public class TraceAspect {
     @Pointcut("execution(public * com.gomdolbook.api.service..*(..))")
     private void allService() {}
 
-    @Pointcut("execution(public * com.gomdolbook.api.repository..*(..))")
+    @Pointcut("execution(public * com.gomdolbook.api.persistence.repository..*(..))")
     private void allRepository() {}
 
     @Around("allService()")

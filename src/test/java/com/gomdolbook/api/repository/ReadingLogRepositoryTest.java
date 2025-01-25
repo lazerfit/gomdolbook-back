@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.gomdolbook.api.persistence.entity.User;
+import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import java.util.List;
@@ -28,6 +30,7 @@ class ReadingLogRepositoryTest {
 
     @Test
     void saveReadingLog() {
+        User user = new User("user", "img", Role.USER);
         ReadingLog saved = readingLogRepository.save(
             new ReadingLog(Status.READING,"1","2","3")
         );
