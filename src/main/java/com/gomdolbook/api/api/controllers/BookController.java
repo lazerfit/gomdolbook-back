@@ -49,18 +49,27 @@ public class BookController {
     }
 
     @GetMapping("/v1/book/search")
-    public Mono<APIResponseDTO<List<BookSearchResponseDTO>>> searchBook(@RequestParam(name = "q") String q) {
+    public Mono<APIResponseDTO<List<BookSearchResponseDTO>>> searchBook(
+        @RequestParam(name = "q") String q) {
         return bookService.searchBookFromAladin(q).map(APIResponseDTO::new);
     }
 
     @PostMapping("/v1/book/save")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveBook(@Validated @RequestBody BookSaveRequestDTO saveRequest) {
-        bookService.saveBook(saveRequest);
+    public void saveBook(@Validated @RequestBody BookSaveRequestDTO saveRequest,
+        @RequestParam(name = "email") String email) {
+
+        bookService.saveBook(saveRequest, email);
     }
 
     @GetMapping("/test/{email}")
     public String test(@PathVariable String email) {
         return bookService.test(email);
     }
+
+//    @GetMapping("/v1/readingLog/get")
+//    public ReadingLog getReadingLog(@RequestParam(name = "email") String email,
+//        @RequestParam(name = "isbn") String isbn) {
+//        return bookService.getReadingLogV2(email, isbn);
+//    }
 }

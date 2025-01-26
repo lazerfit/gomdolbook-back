@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -44,6 +45,9 @@ public class ReadingLog {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "USER_ID")
     private User user;
+
+    @OneToOne(mappedBy = "readingLog")
+    private Book book;
 
     public ReadingLog(Status status, String note1, String note2, String note3) {
         this.status = status;

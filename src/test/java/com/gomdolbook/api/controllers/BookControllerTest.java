@@ -182,6 +182,7 @@ class BookControllerTest {
             .build();
 
         mockMvc.perform(post("/v1/book/save")
+                .param("email", "redkafe@daum.net")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDTO)))
             .andExpect(status().isNoContent())

@@ -58,16 +58,14 @@ public class BookService {
     public ReadingLogDTO getReadingLog(String isbn13) {
 
         return bookRepository.findByIsbn13(isbn13).map(ReadingLogDTO::new)
-            .orElseThrow(() -> new BookNotFoundException(isbn13));
+            .orElseThrow(() -> new BookNotFoundException("Can't find Book: "+isbn13));
     }
 
-    @UserCheckAndSave
-    @Transactional
-    public void getReadingLogV2(String email, String isbn) {
-        Book book = bookRepository.findByIsbn13(isbn).orElseThrow();
-        ReadingLog readingLog = book.getReadingLog();
-        Optional<User> user = userService.findByEmail(email);
-    }
+//    @UserCheckAndSave
+//    @Transactional
+//    public void getReadingLogV2(String email, String isbn) {
+//
+//    }
 
     @Transactional(readOnly = true)
     public String getStatus(String isbn13) {
@@ -79,7 +77,7 @@ public class BookService {
     public BookDTO getBook(String isbn13) {
 
         return bookRepository.findByIsbn13(isbn13).map(BookDTO::new)
-            .orElseThrow(() -> new BookNotFoundException(isbn13));
+            .orElseThrow(() -> new BookNotFoundException("Can't find Book: "+isbn13));
     }
 
     @PreAuthorizeWithContainsUser
@@ -132,8 +130,9 @@ public class BookService {
                     retrySignal -> log.info("[retry] {}", retrySignal.toString())));
     }
 
+    @UserCheckAndSave
     @Transactional
-    public void saveBook(BookSaveRequestDTO requestDTO) {
+    public void saveBook(BookSaveRequestDTO requestDTO, String email) {
         Book book = Book.builder()
             .title(requestDTO.title())
             .author(requestDTO.author())
@@ -145,11 +144,14 @@ public class BookService {
             .publisher(requestDTO.publisher())
             .build();
 
-//        ReadingLog readingLog = new ReadingLog(validateAndConvertStatus(requestDTO.status()), "",
-//            "", "");
-//
-//        ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
-//        book.addReadingLog(savedReadingLog);
+        ReadingLog readingLog = new ReadingLog(validateAndConvertStatus(requestDTO.status()), "",
+            "", "");
+
+        User user = userService.findByEmail(email).orElseThrow();
+        readingLog.setUser(user);
+
+        ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
+        book.addReadingLog(savedReadingLog);
 
         bookRepository.save(book);
     }
