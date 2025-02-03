@@ -4,7 +4,7 @@ import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.ReadingLogDTO;
+import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.errors.BookNotFoundException;
@@ -55,17 +55,18 @@ public class BookService {
     }
 
     @Transactional(readOnly = true)
-    public ReadingLogDTO getReadingLog(String isbn13) {
+    public BookAndReadingLogDTO getReadingLog(String isbn13) {
 
-        return bookRepository.findByIsbn13(isbn13).map(ReadingLogDTO::new)
+        return bookRepository.findByIsbn13(isbn13).map(BookAndReadingLogDTO::new)
             .orElseThrow(() -> new BookNotFoundException("Can't find Book: "+isbn13));
     }
 
-//    @UserCheckAndSave
-//    @Transactional
-//    public void getReadingLogV2(String email, String isbn) {
-//
-//    }
+    @UserCheckAndSave
+    @Transactional
+    public BookAndReadingLogDTO getReadingLogV2(String email, String isbn13) {
+        return bookRepository.findByUserEmailAndIsbn(email, isbn13)
+            .orElseThrow(() -> new BookNotFoundException("Can't find Book: " + isbn13));
+    }
 
     @Transactional(readOnly = true)
     public String getStatus(String isbn13) {

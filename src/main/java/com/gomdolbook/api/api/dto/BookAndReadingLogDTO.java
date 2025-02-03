@@ -2,10 +2,11 @@ package com.gomdolbook.api.api.dto;
 
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.querydsl.core.annotations.QueryProjection;
 import lombok.Getter;
 
 @Getter
-public class ReadingLogDTO {
+public class BookAndReadingLogDTO {
 
     private final String title;
 
@@ -25,7 +26,8 @@ public class ReadingLogDTO {
 
     private final String note3;
 
-    public ReadingLogDTO(Book book) {
+    @QueryProjection
+    public BookAndReadingLogDTO(Book book) {
         title = book.getTitle();
         author = book.getAuthor();
         pubDate = book.getPubDate();

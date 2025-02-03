@@ -63,4 +63,8 @@ public class ReadingLog {
         this.user = user;
         user.getReadingLogs().add(this);
     }
+
+    public void updateStatus(Status status) {
+        this.status = status;
+    }
 }

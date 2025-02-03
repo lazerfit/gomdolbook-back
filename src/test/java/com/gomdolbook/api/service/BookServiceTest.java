@@ -8,7 +8,7 @@ import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.ReadingLogDTO;
+import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.persistence.entity.Book;
@@ -128,8 +128,8 @@ class BookServiceTest {
         book.addReadingLog(readingLog);
         bookRepository.save(book);
 
-        ReadingLogDTO readingLogDTO = bookService.getReadingLog("9788991290402");
-        assertThat(readingLogDTO.getAuthor()).isEqualTo("투퀴디데스");
+        BookAndReadingLogDTO bookAndReadingLogDTO = bookService.getReadingLog("9788991290402");
+        assertThat(bookAndReadingLogDTO.getAuthor()).isEqualTo("투퀴디데스");
         assertThat(user.getReadingLogs().getFirst().getNote1()).isEqualTo("1");
     }
 

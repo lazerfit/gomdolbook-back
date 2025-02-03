@@ -4,7 +4,7 @@ import com.gomdolbook.api.api.dto.APIResponseDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.ReadingLogDTO;
+import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.service.BookService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +29,9 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping("/v1/readingLog/{isbn}")
-    public ResponseEntity<APIResponseDTO<ReadingLogDTO>> getBook(@PathVariable String isbn) {
-        ReadingLogDTO readingLog = bookService.getReadingLog(isbn);
-        APIResponseDTO<ReadingLogDTO> dto = new APIResponseDTO<>(
+    public ResponseEntity<APIResponseDTO<BookAndReadingLogDTO>> getBook(@PathVariable String isbn) {
+        BookAndReadingLogDTO readingLog = bookService.getReadingLog(isbn);
+        APIResponseDTO<BookAndReadingLogDTO> dto = new APIResponseDTO<>(
             readingLog);
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }

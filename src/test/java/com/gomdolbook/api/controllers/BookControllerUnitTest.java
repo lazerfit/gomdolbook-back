@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.gomdolbook.api.api.controllers.BookController;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.ReadingLogDTO;
+import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
@@ -59,8 +59,8 @@ class BookControllerUnitTest {
             .publisher("도서출판 숲")
             .build();
         book.addReadingLog(readingLog);
-        ReadingLogDTO readingLogDTO = new ReadingLogDTO(book);
-        Mockito.when(bookService.getReadingLog("testIsbn")).thenReturn(readingLogDTO);
+        BookAndReadingLogDTO bookAndReadingLogDTO = new BookAndReadingLogDTO(book);
+        Mockito.when(bookService.getReadingLog("testIsbn")).thenReturn(bookAndReadingLogDTO);
 
         mockMvc.perform(get("/v1/readingLog/testIsbn")
             .contentType(MediaType.APPLICATION_JSON))
