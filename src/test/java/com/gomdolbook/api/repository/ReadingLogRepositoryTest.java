@@ -2,10 +2,9 @@ package com.gomdolbook.api.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.gomdolbook.api.config.QueryDslConfig;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
-import com.gomdolbook.api.persistence.entity.User;
-import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import java.util.List;
@@ -13,7 +12,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 
+@Import(QueryDslConfig.class)
 @DataJpaTest
 class ReadingLogRepositoryTest {
 
@@ -30,7 +31,6 @@ class ReadingLogRepositoryTest {
 
     @Test
     void saveReadingLog() {
-        User user = new User("user", "img", Role.USER);
         ReadingLog saved = readingLogRepository.save(
             new ReadingLog(Status.READING,"1","2","3")
         );

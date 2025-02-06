@@ -13,6 +13,7 @@ public record BookSaveRequestDTO(
     @NotBlank String cover,
     @NotBlank String categoryName,
     @NotBlank String publisher,
-    @NotBlank String status
+    @NotBlank String status,
+    @NotBlank String email
 ) {
 }

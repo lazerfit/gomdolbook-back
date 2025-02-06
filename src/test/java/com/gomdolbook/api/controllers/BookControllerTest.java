@@ -19,6 +19,7 @@ import com.gomdolbook.api.persistence.entity.User;
 import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
+import com.gomdolbook.api.persistence.repository.UserRepository;
 import java.io.IOException;
 import java.util.List;
 import okhttp3.mockwebserver.MockResponse;
@@ -39,6 +40,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 @WithMockCustomUser
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -63,6 +65,9 @@ class BookControllerTest {
     @Autowired
     ObjectMapper objectMapper;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @BeforeAll
     static void setUp() throws IOException {
         server = new MockWebServer();
@@ -76,7 +81,6 @@ class BookControllerTest {
 
     @BeforeEach
     void setup1() {
-        User user = new User("user", "img", Role.USER);
         ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
         readingLogRepository.save(readingLog);
         Book book = Book.builder()
@@ -234,6 +238,22 @@ class BookControllerTest {
         mockMvc.perform(get("/v1/readingLog/1234"))
             .andExpect(status().is4xxClientError())
             .andExpect(jsonPath("$.errors").value("Can't find Book: 1234"))
+            .andDo(print());
+    }
+
+    @Transactional
+    @Test
+    void getReadingLogV2() throws Exception{
+        User user = new User("user@gmail.com", "img", Role.USER);
+        userRepository.save(user);
+        Book book = bookRepository.findByIsbn13("9788991290402").orElseThrow();
+        book.getReadingLog().setUser(user);
+
+        mockMvc.perform(get("/v2/readingLog")
+                .param("email", "user@gmail.com")
+                .param("isbn", "9788991290402"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
             .andDo(print());
     }
 }

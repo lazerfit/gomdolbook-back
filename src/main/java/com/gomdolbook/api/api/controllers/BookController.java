@@ -36,6 +36,15 @@ public class BookController {
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
+    @GetMapping("/v2/readingLog")
+    public ResponseEntity<APIResponseDTO<BookAndReadingLogDTO>> getReadingLog(
+        @RequestParam(name = "isbn") String isbn, @RequestParam(name = "email") String email) {
+        BookAndReadingLogDTO readingLog = bookService.getReadingLogV2(email, isbn);
+        APIResponseDTO<BookAndReadingLogDTO> dto = new APIResponseDTO<>(
+            readingLog);
+        return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
+
     @GetMapping("/v1/status/{isbn}")
     public ResponseEntity<APIResponseDTO<String>> getStatus(@PathVariable String isbn) {
         String status = bookService.getStatus(isbn);
@@ -56,10 +65,9 @@ public class BookController {
 
     @PostMapping("/v1/book/save")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveBook(@Validated @RequestBody BookSaveRequestDTO saveRequest,
-        @RequestParam(name = "email") String email) {
+    public void saveBook(@Validated @RequestBody BookSaveRequestDTO saveRequest) {
 
-        bookService.saveBook(saveRequest, email);
+        bookService.saveBook(saveRequest);
     }
 
     @GetMapping("/test/{email}")
@@ -67,9 +75,4 @@ public class BookController {
         return bookService.test(email);
     }
 
-//    @GetMapping("/v1/readingLog/get")
-//    public ReadingLog getReadingLog(@RequestParam(name = "email") String email,
-//        @RequestParam(name = "isbn") String isbn) {
-//        return bookService.getReadingLogV2(email, isbn);
-//    }
 }

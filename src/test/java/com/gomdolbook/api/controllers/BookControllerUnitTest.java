@@ -6,15 +6,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.gomdolbook.api.api.controllers.BookController;
+import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
-import com.gomdolbook.api.persistence.entity.User;
-import com.gomdolbook.api.persistence.entity.User.Role;
+import com.gomdolbook.api.service.Auth.UserService;
 import com.gomdolbook.api.service.BookService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -44,9 +43,11 @@ class BookControllerUnitTest {
     @Autowired
     WebTestClient webTestClient;
 
+    @MockitoBean
+    UserService userService;
+
     @Test
-    void getReadingLog() throws Exception {
-        User user = new User("user", "img", Role.USER);
+    void getReadingLogV1() throws Exception {
         ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
         Book book = Book.builder()
             .title("펠로폰네소스 전쟁사")
@@ -68,6 +69,22 @@ class BookControllerUnitTest {
             .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
             .andExpect(jsonPath("$.data.status").value("READING"))
             .andDo(print());
+    }
+
+    @Test
+    void getReadingLogV2() throws Exception {
+        BookAndReadingLogDTO dto = new BookAndReadingLogDTO("펠로폰네소스 전쟁사", "투퀴디데스", "2011-06-30",
+            "image", "도서출판 숲",
+            Status.READING, "1", "2", "3");
+
+        Mockito.when(bookService.getReadingLogV2("user@gmail.com", "testIsbn")).thenReturn(dto);
+
+        mockMvc.perform(get("/v2/readingLog")
+                .param("email", "user@gmail.com")
+                .param("isbn", "testIsbn"))
+            .andExpect(status().isOk())
+            .andDo(print());
+
     }
 
     @Test
