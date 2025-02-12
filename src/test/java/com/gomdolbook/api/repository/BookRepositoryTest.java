@@ -3,6 +3,7 @@ package com.gomdolbook.api.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
+import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.config.QueryDslConfig;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
@@ -12,7 +13,9 @@ import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import com.gomdolbook.api.persistence.repository.UserRepository;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -30,7 +33,19 @@ class BookRepositoryTest {
     ReadingLogRepository readingLogRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    UserRepository userRepository;
+
+    @BeforeEach
+    void setUp() {
+        User user = new User("user@gmail.com", "img", Role.USER);
+        userRepository.save(user);
+        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
+        readingLog.setUser(user);
+        ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
+        Book mockBook = getMockBook();
+        mockBook.setReadingLog(savedReadingLog);
+        bookRepository.save(mockBook);
+    }
 
     @AfterEach
     void tearDown() {
@@ -55,7 +70,7 @@ class BookRepositoryTest {
         ReadingLog readingLog = readingLogRepository.save(
             new ReadingLog(Status.READING, "1", "2", "3"));
         Book book = getMockBook();
-        book.addReadingLog(readingLog);
+        book.setReadingLog(readingLog);
         Book saved = bookRepository.save(book);
 
         assertThat(saved.getAuthor()).isEqualTo("투퀴디데스");
@@ -74,18 +89,17 @@ class BookRepositoryTest {
     @Transactional
     @Test
     void getReadingLog() {
-        User user = new User("user@gmail.com", "img", Role.USER);
-        userRepository.save(user);
-        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
-        readingLog.setUser(user);
-        ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
-        Book mockBook = getMockBook();
-        mockBook.addReadingLog(savedReadingLog);
-        bookRepository.save(mockBook);
-
         BookAndReadingLogDTO savedBook = bookRepository.findByUserEmailAndIsbn(
             "user@gmail.com", "9788991290402").orElseThrow();
 
         assertThat(savedBook.getAuthor()).isEqualTo("투퀴디데스");
+    }
+
+    @Test
+    void getLibrary() {
+        List<LibraryResponseDTO> dto = bookRepository.findByReadingStatus(
+            Status.READING, "user@gmail.com");
+        assertThat(dto).hasSize(1);
+        assertThat(dto.getFirst().title()).isEqualTo("펠로폰네소스 전쟁사");
     }
 }

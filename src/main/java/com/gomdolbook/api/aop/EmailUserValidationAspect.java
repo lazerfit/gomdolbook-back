@@ -1,5 +1,7 @@
 package com.gomdolbook.api.aop;
 
+import static com.gomdolbook.api.utils.SecurityUtil.getUserEmailFromSecurityContext;
+
 import com.gomdolbook.api.errors.UserValidationError;
 import com.gomdolbook.api.persistence.entity.User;
 import com.gomdolbook.api.persistence.entity.User.Role;
@@ -8,9 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -25,8 +24,7 @@ public class EmailUserValidationAspect {
     public void doValidation() {
         try {
             if (!isValidated()) {
-                Jwt principal = getPrincipal();
-                String email = principal.getClaim("email");
+                String email = getUserEmailFromSecurityContext();
                 User user = new User(email, "img", Role.USER);
                 userService.addUser(user);
             }
@@ -37,13 +35,8 @@ public class EmailUserValidationAspect {
     }
 
     private boolean isValidated() {
-        Jwt principal = getPrincipal();
-        String securityContextEmail = principal.getClaim("email");
-        return userService.findByEmail(securityContextEmail).isPresent();
+        String email = getUserEmailFromSecurityContext();
+        return userService.findByEmail(email).isPresent();
     }
 
-    private Jwt getPrincipal() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return (Jwt) authentication.getPrincipal();
-    }
 }

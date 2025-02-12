@@ -7,10 +7,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @NoArgsConstructor
@@ -46,9 +50,13 @@ public class Book {
     @Column
     private String publisher;
 
+    @Setter
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "READINGLOG_ID")
     private ReadingLog readingLog;
+
+    @OneToMany(mappedBy = "book", fetch = FetchType.LAZY)
+    private final List<BookUserCollection> bookUserCollections = new ArrayList<>();
 
     @Builder
     public Book(String title, String author, String pubDate, String description, String isbn13,
@@ -63,7 +71,4 @@ public class Book {
         this.publisher = publisher;
     }
 
-    public void addReadingLog(ReadingLog readingLog) {
-        this.readingLog = readingLog;
-    }
 }

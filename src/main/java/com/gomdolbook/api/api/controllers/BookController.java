@@ -1,10 +1,11 @@
 package com.gomdolbook.api.api.controllers;
 
 import com.gomdolbook.api.api.dto.APIResponseDTO;
+import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
+import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.service.BookService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -75,4 +76,15 @@ public class BookController {
         return bookService.test(email);
     }
 
+    @GetMapping("/v1/book/Library")
+    public ResponseEntity<APIResponseDTO<List<LibraryResponseDTO>>> getLibrary(
+        @RequestParam("status") String status) {
+        List<LibraryResponseDTO> libraries = bookService.getLibrary(status);
+        if (libraries.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        APIResponseDTO<List<LibraryResponseDTO>> responseDTO = new APIResponseDTO<>(
+            libraries);
+        return new ResponseEntity<>(responseDTO,HttpStatus.OK);
+    }
 }

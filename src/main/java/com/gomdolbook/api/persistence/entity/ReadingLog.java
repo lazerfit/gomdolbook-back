@@ -46,7 +46,7 @@ public class ReadingLog {
     @JoinColumn(name = "USER_ID")
     private User user;
 
-    @OneToOne(mappedBy = "readingLog")
+    @OneToOne(mappedBy = "readingLog", fetch = FetchType.LAZY)
     private Book book;
 
     public ReadingLog(Status status, String note1, String note2, String note3) {
@@ -61,7 +61,9 @@ public class ReadingLog {
             this.user.getReadingLogs().remove(this);
         }
         this.user = user;
-        user.getReadingLogs().add(this);
+        if (user != null && !user.getReadingLogs().contains(this)) {
+            user.getReadingLogs().add(this);
+        }
     }
 
     public void updateStatus(Status status) {

@@ -5,6 +5,16 @@ create table IF NOT EXISTS users (
                     role varchar(20)
 );
 
+create table user_collection
+(
+    usercollection_id bigint auto_increment
+        primary key,
+    name              varchar(255) null,
+    user_id           bigint       null,
+    constraint FK6o8039xka2t1u0mqvi3vfci8r
+        foreign key (user_id) references users (user_id)
+);
+
 create table IF NOT EXISTS reading_log
 (
     readinglog_id bigint auto_increment
@@ -31,9 +41,29 @@ create table IF NOT EXISTS book
     pub_date      varchar(255) null,
     publisher     varchar(255) null,
     title         varchar(255) null,
+    usercollection_id bigint       null,
     constraint UK_READING_LOG
         unique (readinglog_id),
     constraint FK_BOOK_READING_LOG
-        foreign key (readinglog_id) references reading_log (readinglog_id)
+        foreign key (readinglog_id) references reading_log (readinglog_id),
+    constraint FKf79ek6g70j4ena94u7otexbbh
+        foreign key (usercollection_id) references user_collection (usercollection_id)
 );
+
+create table book_user_collection
+(
+    book_readinglog_id bigint auto_increment
+        primary key,
+    book_id            bigint null,
+    usercollection_id  bigint null,
+    user_id            bigint null,
+    constraint FKgpv32t2rb0523idwkig0vb3nx
+        foreign key (book_id) references book (book_id),
+    constraint FKixlpguurfrh6d3ui8cs8uyaw4
+        foreign key (usercollection_id) references user_collection (usercollection_id),
+    constraint FKlmun6tk80jyg0toe64864jh9i
+        foreign key (user_id) references users (user_id)
+);
+
+
 

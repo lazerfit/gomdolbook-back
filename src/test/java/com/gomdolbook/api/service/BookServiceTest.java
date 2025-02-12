@@ -6,9 +6,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
+import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
+import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.persistence.entity.Book;
@@ -94,6 +95,23 @@ class BookServiceTest {
             .publisher("창비")
             .build();
         bookRepository.save(book);
+        User user = new User("redkafe@daum.net", "img", Role.USER);
+        userRepository.save(user);
+        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
+        readingLog.setUser(user);
+        ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
+        Book mockBook = Book.builder()
+            .title("펠로폰네소스 전쟁사")
+            .author("투퀴디데스")
+            .pubDate("2011-06-30")
+            .description("투퀴디세스가 집필한 전쟁사")
+            .isbn13("9788991290402")
+            .cover("image")
+            .categoryName("서양고대사")
+            .publisher("도서출판 숲")
+            .build();
+        mockBook.setReadingLog(savedReadingLog);
+        bookRepository.save(mockBook);
     }
 
     @AfterEach
@@ -125,7 +143,7 @@ class BookServiceTest {
             .categoryName("서양고대사")
             .publisher("도서출판 숲")
             .build();
-        book.addReadingLog(readingLog);
+        book.setReadingLog(readingLog);
         bookRepository.save(book);
 
         BookAndReadingLogDTO bookAndReadingLogDTO = bookService.getReadingLog("9788991290402");
@@ -202,5 +220,18 @@ class BookServiceTest {
     void getStatus() {
         String status = bookService.getStatus("9788991290402");
         assertThat(status).isEqualTo("NEW");
+    }
+
+    @Test
+    void getLibrary() {
+        List<LibraryResponseDTO> library = bookService.getLibrary("READING");
+        assertThat(library).hasSize(1);
+        assertThat(library.getFirst().title()).isEqualTo("펠로폰네소스 전쟁사");
+    }
+
+    @Test
+    void getLibraryEmpty() {
+        List<LibraryResponseDTO> library = bookService.getLibrary("FINISHED");
+        assertThat(library).isEmpty();
     }
 }

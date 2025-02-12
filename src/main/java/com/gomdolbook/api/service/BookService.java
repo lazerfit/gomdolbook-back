@@ -1,13 +1,17 @@
 package com.gomdolbook.api.service;
 
+import static com.gomdolbook.api.utils.SecurityUtil.getUserEmailFromSecurityContext;
+
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
+import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.errors.BookNotFoundException;
+import com.gomdolbook.api.errors.UserValidationError;
 import com.gomdolbook.api.models.BookModel;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
@@ -26,6 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -34,7 +41,6 @@ import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClientRequest;
 import reactor.util.retry.Retry;
-
 
 @Service
 @RequiredArgsConstructor
@@ -76,9 +82,13 @@ public class BookService {
 
     @Transactional(readOnly = true)
     public BookDTO getBook(String isbn13) {
-
         return bookRepository.findByIsbn13(isbn13).map(BookDTO::new)
             .orElseThrow(() -> new BookNotFoundException(isbn13));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Book> findByIsbn(String isbn) {
+        return bookRepository.findByIsbn13(isbn);
     }
 
     @PreAuthorizeWithContainsUser
@@ -88,7 +98,7 @@ public class BookService {
             .queryParam("ttbkey", ttbkey)
             .queryParam("ItemIdType", "ISBN13")
             .queryParam("ItemId", isbn13)
-            .queryParam("Cover", "MidBig")
+            .queryParam("Cover", "Big")
             .queryParam("Output", "JS")
             .queryParam("Version", "20131101").build())
             .map(BookModel::convertBookDTO);
@@ -133,7 +143,7 @@ public class BookService {
 
     @UserCheckAndSave
     @Transactional
-    public void saveBook(BookSaveRequestDTO requestDTO) {
+    public Book saveBook(BookSaveRequestDTO requestDTO) {
         Book book = Book.builder()
             .title(requestDTO.title())
             .author(requestDTO.author())
@@ -148,13 +158,14 @@ public class BookService {
         ReadingLog readingLog = new ReadingLog(validateAndConvertStatus(requestDTO.status()), "",
             "", "");
 
-        User user = userService.findByEmail(requestDTO.email()).orElseThrow();
+        User user = userService.findByEmail(getUserEmailFromSecurityContext())
+            .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
         readingLog.setUser(user);
 
         ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
-        book.addReadingLog(savedReadingLog);
+        book.setReadingLog(savedReadingLog);
 
-        bookRepository.save(book);
+        return bookRepository.save(book);
     }
 
     private Status validateAndConvertStatus(String statusString)
@@ -164,6 +175,15 @@ public class BookService {
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 Status 값입니다. : " + statusString);
         }
+    }
+
+    @PreAuthorizeWithContainsUser
+    @Transactional
+    public List<LibraryResponseDTO> getLibrary(String status) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Jwt principal = (Jwt) authentication.getPrincipal();
+        return bookRepository.findByReadingStatus(validateAndConvertStatus(status),
+            principal.getClaim("email"));
     }
 
 }

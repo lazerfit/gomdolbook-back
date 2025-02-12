@@ -41,7 +41,13 @@ public class User {
     private Role role;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private List<ReadingLog> readingLogs = new ArrayList<>();
+    private final List<ReadingLog> readingLogs = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private final List<UserCollection> userCollections = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private final List<BookUserCollection> bookUserCollections = new ArrayList<>();
 
     public User(String email, String picture, Role role) {
         this.email = email;

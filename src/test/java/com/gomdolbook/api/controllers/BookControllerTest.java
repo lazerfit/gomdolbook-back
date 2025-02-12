@@ -81,7 +81,10 @@ class BookControllerTest {
 
     @BeforeEach
     void setup1() {
+        User user = new User("redkafe@daum.net", "img", Role.USER);
+        userRepository.save(user);
         ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
+        readingLog.setUser(user);
         readingLogRepository.save(readingLog);
         Book book = Book.builder()
             .title("펠로폰네소스 전쟁사")
@@ -93,7 +96,7 @@ class BookControllerTest {
             .categoryName("서양고대사")
             .publisher("도서출판 숲")
             .build();
-        book.addReadingLog(readingLog);
+        book.setReadingLog(readingLog);
         bookRepository.save(book);
     }
 
@@ -254,6 +257,22 @@ class BookControllerTest {
                 .param("isbn", "9788991290402"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
+            .andDo(print());
+    }
+
+    @Test
+    void getLibrary() throws Exception {
+        mockMvc.perform(get("/v1/book/Library")
+                .param("status", "READING"))
+            .andExpect(status().isOk())
+            .andDo(print());
+    }
+
+    @Test
+    void getLibraryEmpty() throws Exception {
+        mockMvc.perform(get("/v1/book/Library")
+                .param("status", "FINISHED"))
+            .andExpect(status().isNoContent())
             .andDo(print());
     }
 }

@@ -9,12 +9,14 @@ import com.gomdolbook.api.api.controllers.BookController;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
+import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import com.gomdolbook.api.service.Auth.UserService;
 import com.gomdolbook.api.service.BookService;
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -59,7 +61,7 @@ class BookControllerUnitTest {
             .categoryName("서양고대사")
             .publisher("도서출판 숲")
             .build();
-        book.addReadingLog(readingLog);
+        book.setReadingLog(readingLog);
         BookAndReadingLogDTO bookAndReadingLogDTO = new BookAndReadingLogDTO(book);
         Mockito.when(bookService.getReadingLog("testIsbn")).thenReturn(bookAndReadingLogDTO);
 
@@ -151,4 +153,26 @@ class BookControllerUnitTest {
             .andDo(print());
     }
 
+    @Test
+    void getLibrary() throws Exception {
+        LibraryResponseDTO dto1 = new LibraryResponseDTO("img", "title1", "isbn");
+        LibraryResponseDTO dto2 = new LibraryResponseDTO("img2", "title2", "isbn");
+        List<LibraryResponseDTO> list = List.of(dto1, dto2);
+
+        Mockito.when(bookService.getLibrary("READING")).thenReturn(list);
+
+        mockMvc.perform(get("/v1/book/Library").param("status", "READING"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].title").value("title1"))
+            .andDo(print());
+    }
+
+    @Test
+    void getLibraryEmpty() throws Exception {
+        Mockito.when(bookService.getLibrary("READING")).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/v1/book/Library").param("status", "READING"))
+            .andExpect(status().isNoContent())
+            .andDo(print());
+    }
 }

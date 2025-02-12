@@ -3,8 +3,12 @@ package com.gomdolbook.api.persistence.repository;
 import static com.gomdolbook.api.persistence.entity.QBook.book;
 
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
+import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.api.dto.QBookAndReadingLogDTO;
+import com.gomdolbook.api.api.dto.QLibraryResponseDTO;
+import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
@@ -23,5 +27,15 @@ public class BookRepositoryImpl implements BookRepositoryCustom{
             .fetchFirst();
 
         return Optional.ofNullable(dto);
+    }
+
+    @Override
+    public List<LibraryResponseDTO> findByReadingStatus(Status status, String email) {
+        return queryFactory.select(
+                new QLibraryResponseDTO(book.cover, book.title, book.isbn13)
+            ).from(book)
+            .where(book.readingLog.user.email.eq(email))
+            .where(book.readingLog.status.eq(status))
+            .fetch();
     }
 }
