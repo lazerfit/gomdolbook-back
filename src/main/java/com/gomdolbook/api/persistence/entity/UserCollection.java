@@ -21,7 +21,7 @@ public class UserCollection {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "USERCOLLECTION_ID")
+    @Column(name = "USER_COLLECTION_ID")
     private Long id;
 
     @Column(nullable = false)

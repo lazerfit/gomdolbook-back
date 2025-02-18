@@ -101,7 +101,7 @@ public class BookService {
             .queryParam("Cover", "Big")
             .queryParam("Output", "JS")
             .queryParam("Version", "20131101").build())
-            .map(BookModel::convertBookDTO);
+            .map(BookModel::toBookDTO);
     }
 
     @PreAuthorizeWithContainsUser
@@ -112,7 +112,7 @@ public class BookService {
             .queryParam("Cover", "MidBig")
             .queryParam("Output", "JS")
             .queryParam("Version", "20131101").build())
-            .map(BookModel::convertListBookSearchResponseDTO);
+            .map(BookModel::toListBookSearchResponseDTO);
     }
 
     private Mono<AladinAPI> executeFetchAladinRequest(String uri, Function<UriBuilder, URI> uriBuilder) {

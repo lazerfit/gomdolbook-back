@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface BookUserCollectionRepository extends JpaRepository<BookUserCollection, Long> {
+public interface BookUserCollectionRepository extends JpaRepository<BookUserCollection, Long>, BookUserCollectionRepositoryCustom {
 
     @Query("select bu from BookUserCollection bu where bu.userCollection.name = :name")
     List<BookUserCollection> findByUserCollectionName(String name);

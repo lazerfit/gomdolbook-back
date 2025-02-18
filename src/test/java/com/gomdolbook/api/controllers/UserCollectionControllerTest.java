@@ -1,16 +1,17 @@
 package com.gomdolbook.api.controllers;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
-import com.gomdolbook.api.persistence.entity.BookUserCollection;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
-import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import com.gomdolbook.api.persistence.entity.User;
-import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.entity.UserCollection;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.BookUserCollectionRepository;
@@ -18,7 +19,8 @@ import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import com.gomdolbook.api.persistence.repository.UserCollectionRepository;
 import com.gomdolbook.api.persistence.repository.UserRepository;
 import com.gomdolbook.api.service.BookService;
-import com.gomdolbook.api.service.UserCollectionService;
+import com.gomdolbook.api.service.BookUserCollectionService;
+import com.gomdolbook.api.util.TestDataFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,12 +28,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WithMockCustomUser
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class UserCollectionControllerTest {
+
+    static UserCollection collection;
+    static Book mockBook;
+    static User user;
 
     @Autowired
     BookService bookService;
@@ -46,57 +53,35 @@ class UserCollectionControllerTest {
     UserRepository userRepository;
 
     @Autowired
-    UserCollectionService userCollectionService;
+    BookUserCollectionService bookUserCollectionService;
 
     @Autowired
     UserCollectionRepository userCollectionRepository;
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     @Autowired
     BookUserCollectionRepository bookUserCollectionRepository;
 
+    @Autowired
+    TestDataFactory testDataFactory;
+
     @BeforeEach
     void setUp() {
-        User user = new User("redkafe@daum.net", "img", Role.USER);
-        userRepository.save(user);
-        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
-        readingLog.setUser(user);
-        ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
-        Book mockBook = Book.builder()
-            .title("펠로폰네소스 전쟁사")
-            .author("투퀴디데스")
-            .pubDate("2011-06-30")
-            .description("투퀴디세스가 집필한 전쟁사")
-            .isbn13("9788991290402")
-            .cover("image")
-            .categoryName("서양고대사")
-            .publisher("도서출판 숲")
-            .build();
-        mockBook.setReadingLog(savedReadingLog);
-        UserCollection collection = new UserCollection("컬렉션");
-        UserCollection collection1 = new UserCollection("컬렉션1");
-        collection.setUser(user);
-        collection1.setUser(user);
-        userCollectionRepository.save(collection1);
-        userCollectionRepository.save(collection);
-        BookUserCollection bookUserCollection = new BookUserCollection();
-        bookUserCollection.setBook(mockBook);
-        bookUserCollection.setUserCollection(collection);
-        bookUserCollection.setUser(user);
-        bookUserCollectionRepository.save(bookUserCollection);
-        BookUserCollection bookUserCollection1 = new BookUserCollection();
-        bookUserCollection1.setBook(mockBook);
-        bookUserCollection1.setUserCollection(collection1);
-        bookUserCollection1.setUser(user);
-        bookRepository.save(mockBook);
-        bookUserCollectionRepository.save(bookUserCollection1);
-        bookRepository.save(mockBook);
+        user = testDataFactory.createUser("redkafe@daum.net", "image");
+        ReadingLog savedReadingLog = testDataFactory.createReadingLog(user);
+        mockBook = testDataFactory.createBook(savedReadingLog);
+        collection = testDataFactory.createUserCollection("컬렉션", user);
+        testDataFactory.createBookUserCollection(mockBook, collection, user);
     }
 
     @AfterEach
     void tearDown() {
+        bookUserCollectionRepository.deleteAll();
         bookRepository.deleteAll();
         userCollectionRepository.deleteAll();
         readingLogRepository.deleteAll();
@@ -105,7 +90,48 @@ class UserCollectionControllerTest {
 
     @Test
     void getCollectionList() throws Exception{
-        mockMvc.perform(get("/v1/userCollectionList"))
+        mockMvc.perform(get("/v1/collection/list"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].name").value("컬렉션"))
+            .andDo(print());
+    }
+
+    @Test
+    void createCollection() throws Exception{
+        mockMvc.perform(post("/v1/collection/create")
+                .param("name", "한강"))
+            .andExpect(status().isCreated())
+            .andDo(print());
+    }
+
+    @Test
+    void getCollection() throws Exception {
+        mockMvc.perform(get("/v1/collection/{name}", "컬렉션"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].cover").value("image"))
+            .andExpect(jsonPath("$.data[0].title").value("펠로폰네소스 전쟁사"))
+            .andDo(print());
+    }
+
+    @Test
+    void addBooks() throws Exception{
+        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
+            .title("소년이 온다")
+            .author("한강")
+            .pubDate("2014-05-19")
+            .description("노벨 문학상")
+            .isbn13("9788936434120")
+            .cover("image 한강")
+            .categoryName("노벨문학상")
+            .publisher("창비")
+            .status("READING")
+            .build();
+
+        String data = objectMapper.writeValueAsString(requestDTO);
+
+        mockMvc.perform(post("/v1/collection/{name}/addBook", "컬렉션")
+                .content(data)
+                .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andDo(print());
     }

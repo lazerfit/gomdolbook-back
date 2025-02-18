@@ -13,7 +13,7 @@ public class BookModel {
 
     private BookModel(){}
 
-    public static BookDTO convertBookDTO(Book book) {
+    public static BookDTO toBookDTO(Book book) {
         return BookDTO.builder()
             .title(book.getTitle())
             .author(book.getAuthor())
@@ -26,7 +26,7 @@ public class BookModel {
             .build();
     }
 
-    public static BookDTO convertBookDTO(AladinAPI aladinAPI) {
+    public static BookDTO toBookDTO(AladinAPI aladinAPI) {
         Item item = aladinAPI.item().getFirst();
         return BookDTO.builder()
             .title(item.title())
@@ -40,7 +40,7 @@ public class BookModel {
             .build();
     }
 
-    public static BookDTO convertBookDTO(Item item) {
+    public static BookDTO toBookDTO(Item item) {
         return BookDTO.builder()
             .title(item.title())
             .author(item.author())
@@ -53,7 +53,7 @@ public class BookModel {
             .build();
     }
 
-    public static BookSearchResponseDTO convertBookSearchResponseDTO(Item item) {
+    public static BookSearchResponseDTO toBookSearchResponseDTO(Item item) {
         return BookSearchResponseDTO.builder()
             .title(item.title())
             .author(item.author())
@@ -66,11 +66,11 @@ public class BookModel {
     }
 
     public static List<BookDTO> convertListBookDTO(AladinAPI aladinAPI) {
-        return aladinAPI.item().stream().map(BookModel::convertBookDTO).toList();
+        return aladinAPI.item().stream().map(BookModel::toBookDTO).toList();
     }
 
-    public static List<BookSearchResponseDTO> convertListBookSearchResponseDTO(AladinAPI aladinAPI) {
-        return aladinAPI.item().stream().map(BookModel::convertBookSearchResponseDTO).toList();
+    public static List<BookSearchResponseDTO> toListBookSearchResponseDTO(AladinAPI aladinAPI) {
+        return aladinAPI.item().stream().map(BookModel::toBookSearchResponseDTO).toList();
     }
 
     public static BookResponseDTO convertBookResponseDTO(AladinAPI aladinAPI, Status status) {

@@ -2,19 +2,19 @@ package com.gomdolbook.api.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
 import com.gomdolbook.api.config.QueryDslConfig;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.BookUserCollection;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
-import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import com.gomdolbook.api.persistence.entity.User;
-import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.entity.UserCollection;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.BookUserCollectionRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import com.gomdolbook.api.persistence.repository.UserCollectionRepository;
 import com.gomdolbook.api.persistence.repository.UserRepository;
+import com.gomdolbook.api.util.TestDataFactory;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,9 +25,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-@Import(QueryDslConfig.class)
+@Import({QueryDslConfig.class, TestDataFactory.class})
 @DataJpaTest
 class UserCollectionRepositoryTest {
+
+    static UserCollection collection;
+    static Book mockBook;
+    static User user;
 
     @Autowired
     UserCollectionRepository userCollectionRepository;
@@ -44,15 +48,19 @@ class UserCollectionRepositoryTest {
     @Autowired
     BookUserCollectionRepository bookUserCollectionRepository;
 
+    @Autowired
+    TestDataFactory testDataFactory;
+
     @BeforeEach
     void setUp() {
-        User user = createUser("user@gmail.com", "image");
-        ReadingLog savedReadingLog = createReadingLog(user);
-        Book mockBook = createBook(savedReadingLog);
-        UserCollection collection = createUserCollection("컬렉션", user);
-        UserCollection collection1 = createUserCollection("컬렉션1", user);
-        createBookUserCollection(mockBook, collection, user);
-        createBookUserCollection(mockBook, collection1, user);
+        user = testDataFactory.createUser("user@gmail.com", "image");
+        ReadingLog savedReadingLog = testDataFactory.createReadingLog(user);
+        mockBook = testDataFactory.createBook(savedReadingLog);
+        collection = testDataFactory.createUserCollection("컬렉션", user);
+        testDataFactory.createBookUserCollection(mockBook, collection, user);
+
+        User testUser = testDataFactory.createUser("test@email.com", "image");
+        testDataFactory.createUserCollection("test", testUser);
     }
 
     @AfterEach
@@ -69,49 +77,53 @@ class UserCollectionRepositoryTest {
         List<BookUserCollection> byEmail = bookUserCollectionRepository.findByUserEmail(
             "user@gmail.com");
 
-        assertThat(byEmail).size().isEqualTo(2);
-        assertThat(byEmail.getLast().getUserCollection().getName()).isEqualTo("컬렉션1");
+        assertThat(byEmail).size().isEqualTo(1);
+        assertThat(byEmail.getLast().getUserCollection().getName()).isEqualTo("컬렉션");
     }
 
-    private Book createBook(ReadingLog readingLog) {
+    @Test
+    void getTwoCollections() {
+        testDataFactory.createUserCollection("col1", user);
+
+        List<BookCollectionCoverDTO> allCollection = bookUserCollectionRepository.getAllCollection(
+            "user@gmail.com");
+
+        assertThat(allCollection).hasSize(2);
+        assertThat(allCollection.getFirst().name()).isEqualTo("컬렉션");
+        assertThat(allCollection.getLast().name()).isEqualTo("col1");
+    }
+
+    @Test
+    void getOneBookCover() {
+        List<BookCollectionCoverDTO> covers = bookUserCollectionRepository.getAllCollection(
+            "user@gmail.com");
+
+        assertThat(covers).hasSize(1);
+    }
+
+    @Test
+    void getMultipleBookCovers() {
         Book book =  Book.builder()
-            .title("펠로폰네소스 전쟁사")
-            .author("투퀴디데스")
-            .pubDate("2011-06-30")
-            .description("투퀴디세스가 집필한 전쟁사")
-            .isbn13("9788991290402")
-            .cover("image")
-            .categoryName("서양고대사")
-            .publisher("도서출판 숲")
+            .title("소년이 온다")
+            .author("한강")
+            .pubDate("2014-05-19")
+            .description("노벨 문학상")
+            .isbn13("9788936434120")
+            .cover("image 한강")
+            .categoryName("노벨문학상")
+            .publisher("창비")
             .build();
-        book.setReadingLog(readingLog);
-        return bookRepository.save(book);
-    }
+        Book saved = bookRepository.save(book);
+        testDataFactory.createBookUserCollection(saved, collection, user);
 
-    private ReadingLog createReadingLog(User user) {
-        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
-        readingLog.setUser(user);
-        return readingLogRepository.save(readingLog);
-    }
+        List<BookCollectionCoverDTO> collectionDTO = bookUserCollectionRepository.getAllCollection(
+            "user@gmail.com");
 
-    private User createUser(String email, String pic) {
-        User user = new User(email, pic, Role.USER);
-        return userRepository.save(user);
-    }
-
-    private UserCollection createUserCollection(String name, User user) {
-        UserCollection collection = new UserCollection(name);
-        collection.setUser(user);
-        return userCollectionRepository.save(collection);
-    }
-
-    private BookUserCollection createBookUserCollection(Book book, UserCollection userCollection,
-        User user) {
-        BookUserCollection bookUserCollection = new BookUserCollection();
-        bookUserCollection.setBook(book);
-        bookUserCollection.setUserCollection(userCollection);
-        bookUserCollection.setUser(user);
-        return bookUserCollectionRepository.save(bookUserCollection);
+        assertThat(collectionDTO).hasSize(2);
+        assertThat(collectionDTO.getFirst().name()).isEqualTo("컬렉션");
+        assertThat(collectionDTO.getLast().name()).isEqualTo("컬렉션");
+        assertThat(collectionDTO.getFirst().cover()).isEqualTo("image");
+        assertThat(collectionDTO.getLast().cover()).isEqualTo("image 한강");
     }
 
 }

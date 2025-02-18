@@ -18,7 +18,7 @@ public class BookUserCollection {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "BOOK_READINGLOG_ID")
+    @Column(name = "BOOK_USER_COLLECTION_ID")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -26,7 +26,7 @@ public class BookUserCollection {
     private Book book;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "USERCOLLECTION_ID")
+    @JoinColumn(name = "USER_COLLECTION_ID")
     private UserCollection userCollection;
 
     @ManyToOne(fetch = FetchType.LAZY)
