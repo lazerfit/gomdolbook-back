@@ -8,18 +8,18 @@ import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
+import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
 import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
-import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import com.gomdolbook.api.persistence.entity.User;
-import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import com.gomdolbook.api.persistence.repository.UserRepository;
+import com.gomdolbook.api.util.TestDataFactory;
 import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +52,7 @@ import reactor.test.StepVerifier;
 class BookServiceTest {
 
     static MockWebServer server;
+    static User user;
 
     @Autowired
     BookService bookService;
@@ -71,6 +72,9 @@ class BookServiceTest {
     @MockitoBean
     private JwtDecoder jwtDecoder;
 
+    @Autowired
+    TestDataFactory testDataFactory;
+
     @BeforeAll
     static void setUp() throws IOException {
         server = new MockWebServer();
@@ -84,6 +88,10 @@ class BookServiceTest {
 
     @BeforeEach
     void setup() {
+        user = testDataFactory.createUser("redkafe@daum.net", "image");
+        ReadingLog savedReadingLog = testDataFactory.createReadingLog(user);
+        testDataFactory.createBook(savedReadingLog);
+
         Book book = Book.builder()
             .title("소년이 온다")
             .author("한강")
@@ -95,28 +103,13 @@ class BookServiceTest {
             .publisher("창비")
             .build();
         bookRepository.save(book);
-        User user = new User("redkafe@daum.net", "img", Role.USER);
-        userRepository.save(user);
-        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
-        readingLog.setUser(user);
-        ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
-        Book mockBook = Book.builder()
-            .title("펠로폰네소스 전쟁사")
-            .author("투퀴디데스")
-            .pubDate("2011-06-30")
-            .description("투퀴디세스가 집필한 전쟁사")
-            .isbn13("9788991290402")
-            .cover("image")
-            .categoryName("서양고대사")
-            .publisher("도서출판 숲")
-            .build();
-        mockBook.setReadingLog(savedReadingLog);
-        bookRepository.save(mockBook);
     }
 
     @AfterEach
     void teardown() {
         bookRepository.deleteAll();
+        readingLogRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     @DynamicPropertySource
@@ -128,27 +121,8 @@ class BookServiceTest {
     @Transactional
     @Test
     void getReadingLog() {
-        User user = new User("user", "img", Role.USER);
-        userRepository.save(user);
-        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
-        readingLogRepository.save(readingLog);
-        readingLog.setUser(user);
-        Book book = Book.builder()
-            .title("펠로폰네소스 전쟁사")
-            .author("투퀴디데스")
-            .pubDate("2011-06-30")
-            .description("투퀴디세스가 집필한 전쟁사")
-            .isbn13("9788991290402")
-            .cover("image")
-            .categoryName("서양고대사")
-            .publisher("도서출판 숲")
-            .build();
-        book.setReadingLog(readingLog);
-        bookRepository.save(book);
-
-        BookAndReadingLogDTO bookAndReadingLogDTO = bookService.getReadingLog("9788991290402");
-        assertThat(bookAndReadingLogDTO.getAuthor()).isEqualTo("투퀴디데스");
-        assertThat(user.getReadingLogs().getFirst().getNote1()).isEqualTo("1");
+        BookAndReadingLogDTO readingLog = bookService.getReadingLog("9788991290402");
+        assertThat(readingLog.getAuthor()).isEqualTo("투퀴디데스");
     }
 
     @Test
@@ -219,7 +193,7 @@ class BookServiceTest {
     @Test
     void getStatus() {
         String status = bookService.getStatus("9788991290402");
-        assertThat(status).isEqualTo("NEW");
+        assertThat(status).isEqualTo("READING");
     }
 
     @Test
@@ -233,5 +207,31 @@ class BookServiceTest {
     void getLibraryEmpty() {
         List<LibraryResponseDTO> library = bookService.getLibrary("FINISHED");
         assertThat(library).isEmpty();
+    }
+
+    @Test
+    void saveBookWithStatus() {
+        BookSaveRequestDTO bookSaveRequestDTO = new BookSaveRequestDTO(
+            "t", "a", "p", "d", "i", "c", "cn", "p", "READING");
+
+        Book book = bookService.saveBook(bookSaveRequestDTO);
+        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("READING");
+    }
+
+    @Test
+    void saveBookWithNullStatus() {
+        BookSaveRequestDTO bookSaveRequestDTO = new BookSaveRequestDTO(
+            "t", "a", "p", "d", "i", "c", "cn", "p", null);
+
+        Book book = bookService.saveBook(bookSaveRequestDTO);
+        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("NEW");
+    }
+
+    @Test
+    void saveBookWithBlankStatus() {
+        BookSaveRequestDTO bookSaveRequestDTO = new BookSaveRequestDTO(
+            "t", "a", "p", "d", "i", "c", "cn", "p", "");
+        Book book = bookService.saveBook(bookSaveRequestDTO);
+        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("NEW");
     }
 }

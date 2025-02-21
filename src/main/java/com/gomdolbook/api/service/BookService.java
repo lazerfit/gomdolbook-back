@@ -77,7 +77,7 @@ public class BookService {
     @Transactional(readOnly = true)
     public String getStatus(String isbn13) {
         Optional<Book> book = bookRepository.findByIsbn13(isbn13);
-        return book.map(value -> value.getReadingLog().getStatus().name()).orElse("NEW");
+        return book.map(value -> value.getReadingLog().getStatus().name()).orElseThrow(() -> new BookNotFoundException(isbn13));
     }
 
     @Transactional(readOnly = true)
@@ -155,7 +155,9 @@ public class BookService {
             .publisher(requestDTO.publisher())
             .build();
 
-        ReadingLog readingLog = new ReadingLog(validateAndConvertStatus(requestDTO.status()), "",
+        String status = (requestDTO.status() == null || requestDTO.status().isBlank()) ? "NEW" : requestDTO.status();
+
+        ReadingLog readingLog = new ReadingLog(validateAndConvertStatus(status), "",
             "", "");
 
         User user = userService.findByEmail(getUserEmailFromSecurityContext())

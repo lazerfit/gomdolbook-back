@@ -100,7 +100,7 @@ class BookUserCollectionServiceTest {
     }
 
     @Test
-    void addBook() {
+    void addBookWithStatus() {
         BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
             .title("소년이 온다")
             .author("한강")
@@ -119,6 +119,46 @@ class BookUserCollectionServiceTest {
         assertThat(collectionList).hasSize(1);
         assertThat(collectionList.getLast().getName()).isEqualTo("컬렉션");
         assertThat(collectionList.getLast().getBooks().getCovers()).hasSize(2);
+    }
+
+    @Test
+    void addBookWithNullStatus() {
+        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
+            .title("소년이 온다")
+            .author("한강")
+            .pubDate("2014-05-19")
+            .description("노벨 문학상")
+            .isbn13("9788936434120")
+            .cover("image 한강")
+            .categoryName("노벨문학상")
+            .publisher("창비")
+            .status(null)
+            .build();
+
+        bookUserCollectionService.addBook(requestDTO, "컬렉션");
+        String status = bookService.getStatus("9788936434120");
+
+        assertThat(status).isEqualTo("NEW");
+    }
+
+    @Test
+    void addBookWithBlankStatus() {
+        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
+            .title("소년이 온다")
+            .author("한강")
+            .pubDate("2014-05-19")
+            .description("노벨 문학상")
+            .isbn13("9788936434120")
+            .cover("image 한강")
+            .categoryName("노벨문학상")
+            .publisher("창비")
+            .status("")
+            .build();
+
+        bookUserCollectionService.addBook(requestDTO, "컬렉션");
+        String status = bookService.getStatus("9788936434120");
+
+        assertThat(status).isEqualTo("NEW");
     }
 
     @WithMockCustomUser(email = "test@email.com")
@@ -160,4 +200,5 @@ class BookUserCollectionServiceTest {
         assertThat(c.getLast().title()).isEqualTo("소년이 온다");
         assertThat(c.getLast().cover()).isEqualTo("image 한강");
     }
+
 }

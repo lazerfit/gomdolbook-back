@@ -22,7 +22,7 @@ create table IF NOT EXISTS reading_log
     note1         varchar(255)                            null,
     note2         varchar(255)                            null,
     note3         varchar(255)                            null,
-    status        enum ('FINISHED', 'READING', 'TO_READ') null,
+    status        enum ('FINISHED', 'READING', 'TO_READ', 'NEW') null,
     user_id       bigint                                  null,
     constraint FKREADINGLOGUSERS
         foreign key (user_id) references users (user_id)

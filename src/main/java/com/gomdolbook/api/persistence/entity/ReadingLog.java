@@ -22,7 +22,8 @@ public class ReadingLog {
     public enum Status {
         TO_READ,
         READING,
-        FINISHED
+        FINISHED,
+        NEW
     }
 
     @Id

@@ -30,17 +30,6 @@ public class BookUserCollectionRepositoryImpl implements BookUserCollectionRepos
             .leftJoin(book).on(book.id.eq(bookUserCollection.book.id))
             .where(userCollection.user.email.eq(email))
             .fetch();
-
-
-//        LinkedHashMap<String, BookCoverDTO> tempMap = new LinkedHashMap<>();
-//        for (Tuple tuple : results) {
-//            tempMap.
-//                computeIfAbsent(tuple.get(userCollection.name), s -> new BookCoverDTO())
-//                .addCovers(tuple.get(book.cover));
-//        }
-//
-//        return tempMap.entrySet().stream()
-//            .map(e -> new BookCollectionCoverListResponseDTO(e.getKey(), e.getValue())).toList();
     }
 
     @Override
