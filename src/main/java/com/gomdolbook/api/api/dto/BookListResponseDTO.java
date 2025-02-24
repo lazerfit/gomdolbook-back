@@ -2,12 +2,13 @@ package com.gomdolbook.api.api.dto;
 
 import com.querydsl.core.annotations.QueryProjection;
 
-public record LibraryResponseDTO(
+public record BookListResponseDTO(
     String cover,
     String title,
-    String isbn
+    String isbn,
+    boolean isReadingLogExists
 ) {
     @QueryProjection
-    public LibraryResponseDTO {
+    public BookListResponseDTO {
     }
 }

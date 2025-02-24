@@ -5,7 +5,7 @@ import static com.gomdolbook.api.utils.SecurityUtil.getUserEmailFromSecurityCont
 import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
 import com.gomdolbook.api.api.dto.BookCollectionCoverListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
-import com.gomdolbook.api.api.dto.LibraryResponseDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.errors.UserValidationError;
@@ -43,7 +43,7 @@ public class BookUserCollectionService {
     }
 
     @Transactional(readOnly = true)
-    public List<LibraryResponseDTO> getCollection(String name) {
+    public List<BookListResponseDTO> getCollection(String name) {
         return bookUserCollectionRepository.getCollection(name, getUserEmailFromSecurityContext());
     }
 
@@ -64,11 +64,15 @@ public class BookUserCollectionService {
         User user = userRepository.findByEmail(getUserEmailFromSecurityContext())
             .orElseThrow(() -> new UserValidationError("해당 유저를 찾을 수 없습니다."));
         bookService.findByIsbn(dto.isbn13()).ifPresentOrElse(book -> {
-            BookUserCollection bookUserCollection = new BookUserCollection();
-            bookUserCollection.setBook(book);
-            bookUserCollection.setUserCollection(collection);
-            bookUserCollection.setUser(user);
-            bookUserCollectionRepository.save(bookUserCollection);
+            boolean isBookUserCollectionExists = bookUserCollectionRepository.existsBookAndUser(
+                book, user);
+            if (!isBookUserCollectionExists) {
+                BookUserCollection bookUserCollection = new BookUserCollection();
+                bookUserCollection.setBook(book);
+                bookUserCollection.setUserCollection(collection);
+                bookUserCollection.setUser(user);
+                bookUserCollectionRepository.save(bookUserCollection);
+            }
         },
             () -> {
                 Book book = bookService.saveBook(dto);

@@ -3,6 +3,7 @@ package com.gomdolbook.api.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.config.QueryDslConfig;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.BookUserCollection;
@@ -79,6 +80,15 @@ class UserCollectionRepositoryTest {
 
         assertThat(byEmail).size().isEqualTo(1);
         assertThat(byEmail.getLast().getUserCollection().getName()).isEqualTo("컬렉션");
+    }
+
+    @Test
+    void getCollection() {
+        List<BookListResponseDTO> result = bookUserCollectionRepository.getCollection("컬렉션",
+            "user@gmail.com");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().isReadingLogExists()).isTrue();
     }
 
     @Test

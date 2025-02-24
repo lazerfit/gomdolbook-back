@@ -5,9 +5,10 @@ import static com.gomdolbook.api.persistence.entity.QBookUserCollection.bookUser
 import static com.gomdolbook.api.persistence.entity.QUserCollection.userCollection;
 
 import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
-import com.gomdolbook.api.api.dto.LibraryResponseDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.QBookCollectionCoverDTO;
-import com.gomdolbook.api.api.dto.QLibraryResponseDTO;
+import com.gomdolbook.api.api.dto.QBookListResponseDTO;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -33,13 +34,14 @@ public class BookUserCollectionRepositoryImpl implements BookUserCollectionRepos
     }
 
     @Override
-    public List<LibraryResponseDTO> getCollection(String name, String email) {
+    public List<BookListResponseDTO> getCollection(String name, String email) {
 
         return queryFactory.select(
-                new QLibraryResponseDTO(
+                new QBookListResponseDTO(
                     bookUserCollection.book.cover,
                     bookUserCollection.book.title,
-                    bookUserCollection.book.isbn13
+                    bookUserCollection.book.isbn13,
+                    Expressions.booleanTemplate("case when coalesce(count({0}), 0) > 0 then true else false end", bookUserCollection.book.readingLog)
                 )
             ).from(bookUserCollection)
             .where(bookUserCollection.user.email.eq(email))

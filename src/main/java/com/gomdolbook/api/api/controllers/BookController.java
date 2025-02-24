@@ -1,11 +1,13 @@
 package com.gomdolbook.api.api.controllers;
 
+import static com.gomdolbook.api.utils.SecurityUtil.getUserEmailFromSecurityContext;
+
 import com.gomdolbook.api.api.dto.APIResponseDTO;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.service.BookService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -29,18 +31,11 @@ public class BookController {
 
     private final BookService bookService;
 
-    @GetMapping("/v1/readingLog/{isbn}")
-    public ResponseEntity<APIResponseDTO<BookAndReadingLogDTO>> getBook(@PathVariable String isbn) {
-        BookAndReadingLogDTO readingLog = bookService.getReadingLog(isbn);
-        APIResponseDTO<BookAndReadingLogDTO> dto = new APIResponseDTO<>(
-            readingLog);
-        return new ResponseEntity<>(dto, HttpStatus.OK);
-    }
-
-    @GetMapping("/v2/readingLog")
+    @GetMapping("/v1/readingLog")
     public ResponseEntity<APIResponseDTO<BookAndReadingLogDTO>> getReadingLog(
-        @RequestParam(name = "isbn") String isbn, @RequestParam(name = "email") String email) {
-        BookAndReadingLogDTO readingLog = bookService.getReadingLogV2(email, isbn);
+        @RequestParam(name = "isbn") String isbn) {
+        BookAndReadingLogDTO readingLog = bookService.getReadingLogV2(
+            getUserEmailFromSecurityContext(), isbn);
         APIResponseDTO<BookAndReadingLogDTO> dto = new APIResponseDTO<>(
             readingLog);
         return new ResponseEntity<>(dto, HttpStatus.OK);
@@ -71,19 +66,14 @@ public class BookController {
         bookService.saveBook(saveRequest);
     }
 
-    @GetMapping("/test/{email}")
-    public String test(@PathVariable String email) {
-        return bookService.test(email);
-    }
-
     @GetMapping("/v1/book/Library")
-    public ResponseEntity<APIResponseDTO<List<LibraryResponseDTO>>> getLibrary(
+    public ResponseEntity<APIResponseDTO<List<BookListResponseDTO>>> getLibrary(
         @RequestParam("status") String status) {
-        List<LibraryResponseDTO> libraries = bookService.getLibrary(status);
+        List<BookListResponseDTO> libraries = bookService.getLibrary(status);
         if (libraries.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        APIResponseDTO<List<LibraryResponseDTO>> responseDTO = new APIResponseDTO<>(
+        APIResponseDTO<List<BookListResponseDTO>> responseDTO = new APIResponseDTO<>(
             libraries);
         return new ResponseEntity<>(responseDTO,HttpStatus.OK);
     }

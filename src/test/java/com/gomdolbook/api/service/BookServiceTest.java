@@ -8,9 +8,9 @@ import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.persistence.entity.Book;
@@ -198,14 +198,14 @@ class BookServiceTest {
 
     @Test
     void getLibrary() {
-        List<LibraryResponseDTO> library = bookService.getLibrary("READING");
+        List<BookListResponseDTO> library = bookService.getLibrary("READING");
         assertThat(library).hasSize(1);
         assertThat(library.getFirst().title()).isEqualTo("펠로폰네소스 전쟁사");
     }
 
     @Test
     void getLibraryEmpty() {
-        List<LibraryResponseDTO> library = bookService.getLibrary("FINISHED");
+        List<BookListResponseDTO> library = bookService.getLibrary("FINISHED");
         assertThat(library).isEmpty();
     }
 

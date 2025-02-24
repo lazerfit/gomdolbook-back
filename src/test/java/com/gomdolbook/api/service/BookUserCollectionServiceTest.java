@@ -3,8 +3,8 @@ package com.gomdolbook.api.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gomdolbook.api.api.dto.BookCollectionCoverListResponseDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
-import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
@@ -172,7 +172,7 @@ class BookUserCollectionServiceTest {
 
     @Test
     void getCollection() {
-        List<LibraryResponseDTO> c = bookUserCollectionService.getCollection("컬렉션");
+        List<BookListResponseDTO> c = bookUserCollectionService.getCollection("컬렉션");
 
         assertThat(c).hasSize(1);
         assertThat(c.getLast().title()).isEqualTo("펠로폰네소스 전쟁사");
@@ -194,11 +194,44 @@ class BookUserCollectionServiceTest {
             .build();
         bookUserCollectionService.addBook(requestDTO, "컬렉션");
 
-        List<LibraryResponseDTO> c = bookUserCollectionService.getCollection("컬렉션");
+        List<BookListResponseDTO> c = bookUserCollectionService.getCollection("컬렉션");
 
         assertThat(c).hasSize(2);
         assertThat(c.getLast().title()).isEqualTo("소년이 온다");
         assertThat(c.getLast().cover()).isEqualTo("image 한강");
+    }
+
+    @Test
+    void testDuplicatedBookSave() {
+        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
+            .title("소년이 온다")
+            .author("한강")
+            .pubDate("2014-05-19")
+            .description("노벨 문학상")
+            .isbn13("9788936434120")
+            .cover("image 한강")
+            .categoryName("노벨문학상")
+            .publisher("창비")
+            .status("READING")
+            .build();
+        bookUserCollectionService.addBook(requestDTO, "컬렉션");
+
+        BookSaveRequestDTO requestDTO2 = BookSaveRequestDTO.builder()
+            .title("소년이 온다")
+            .author("한강")
+            .pubDate("2014-05-19")
+            .description("노벨 문학상")
+            .isbn13("9788936434120")
+            .cover("image 한강")
+            .categoryName("노벨문학상")
+            .publisher("창비")
+            .status("READING")
+            .build();
+        bookUserCollectionService.addBook(requestDTO2, "컬렉션");
+
+        List<BookListResponseDTO> collection1 = bookUserCollectionService.getCollection("컬렉션");
+
+        assertThat(collection1).hasSize(2);
     }
 
 }

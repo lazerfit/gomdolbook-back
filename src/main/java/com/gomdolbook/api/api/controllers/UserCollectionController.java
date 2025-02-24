@@ -3,7 +3,7 @@ package com.gomdolbook.api.api.controllers;
 import com.gomdolbook.api.api.dto.APIResponseDTO;
 import com.gomdolbook.api.api.dto.BookCollectionCoverListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
-import com.gomdolbook.api.api.dto.LibraryResponseDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.service.BookUserCollectionService;
 import java.net.URI;
 import java.util.List;
@@ -36,11 +36,11 @@ public class UserCollectionController {
     }
 
     @GetMapping("/v1/collection/{name}")
-    public ResponseEntity<APIResponseDTO<List<LibraryResponseDTO>>> getCollection(
+    public ResponseEntity<APIResponseDTO<List<BookListResponseDTO>>> getCollection(
         @PathVariable String name) {
         var collection = bookUserCollectionService.getCollection(name);
 
-        APIResponseDTO<List<LibraryResponseDTO>> response = new APIResponseDTO<>(collection);
+        APIResponseDTO<List<BookListResponseDTO>> response = new APIResponseDTO<>(collection);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -57,7 +57,9 @@ public class UserCollectionController {
     }
 
     @PostMapping("/v1/collection/{name}/addBook")
-    public void addBooks(@RequestBody BookSaveRequestDTO dto, @PathVariable String name) {
+    public ResponseEntity<Void> addBooks(@RequestBody BookSaveRequestDTO dto, @PathVariable String name) {
         bookUserCollectionService.addBook(dto, name);
+
+        return ResponseEntity.ok().build();
     }
 }

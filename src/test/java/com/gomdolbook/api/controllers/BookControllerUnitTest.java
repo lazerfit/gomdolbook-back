@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.gomdolbook.api.api.controllers.BookController;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
@@ -155,9 +155,9 @@ class BookControllerUnitTest {
 
     @Test
     void getLibrary() throws Exception {
-        LibraryResponseDTO dto1 = new LibraryResponseDTO("img", "title1", "isbn");
-        LibraryResponseDTO dto2 = new LibraryResponseDTO("img2", "title2", "isbn");
-        List<LibraryResponseDTO> list = List.of(dto1, dto2);
+        BookListResponseDTO dto1 = new BookListResponseDTO("img", "title1", "isbn", true);
+        BookListResponseDTO dto2 = new BookListResponseDTO("img2", "title2", "isbn", true);
+        List<BookListResponseDTO> list = List.of(dto1, dto2);
 
         Mockito.when(bookService.getLibrary("READING")).thenReturn(list);
 

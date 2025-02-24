@@ -3,10 +3,11 @@ package com.gomdolbook.api.persistence.repository;
 import static com.gomdolbook.api.persistence.entity.QBook.book;
 
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
-import com.gomdolbook.api.api.dto.LibraryResponseDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.QBookAndReadingLogDTO;
-import com.gomdolbook.api.api.dto.QLibraryResponseDTO;
+import com.gomdolbook.api.api.dto.QBookListResponseDTO;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
@@ -30,9 +31,10 @@ public class BookRepositoryImpl implements BookRepositoryCustom{
     }
 
     @Override
-    public List<LibraryResponseDTO> findByReadingStatus(Status status, String email) {
+    public List<BookListResponseDTO> findByReadingStatus(Status status, String email) {
         return queryFactory.select(
-                new QLibraryResponseDTO(book.cover, book.title, book.isbn13)
+                new QBookListResponseDTO(book.cover, book.title, book.isbn13,
+                    Expressions.booleanTemplate("case when coalesce(count({0}), 0) > 0 then true else false end", book.readingLog))
             ).from(book)
             .where(book.readingLog.user.email.eq(email))
             .where(book.readingLog.status.eq(status))

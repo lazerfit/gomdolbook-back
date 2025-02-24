@@ -5,9 +5,9 @@ import static com.gomdolbook.api.utils.SecurityUtil.getUserEmailFromSecurityCont
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.LibraryResponseDTO;
 import com.gomdolbook.api.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.errors.BookNotFoundException;
@@ -181,7 +181,7 @@ public class BookService {
 
     @PreAuthorizeWithContainsUser
     @Transactional
-    public List<LibraryResponseDTO> getLibrary(String status) {
+    public List<BookListResponseDTO> getLibrary(String status) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt principal = (Jwt) authentication.getPrincipal();
         return bookRepository.findByReadingStatus(validateAndConvertStatus(status),

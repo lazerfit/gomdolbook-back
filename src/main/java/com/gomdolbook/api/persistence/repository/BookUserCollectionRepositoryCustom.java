@@ -1,7 +1,7 @@
 package com.gomdolbook.api.persistence.repository;
 
 import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
-import com.gomdolbook.api.api.dto.LibraryResponseDTO;
+import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 
@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface BookUserCollectionRepositoryCustom {
 
     List<BookCollectionCoverDTO> getAllCollection(String email);
-    List<LibraryResponseDTO> getCollection(String name, String email);
+    List<BookListResponseDTO> getCollection(String name, String email);
 }
