@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.Query;
 public interface ReadingLogRepository extends JpaRepository<ReadingLog, Long> {
 
     @Query("select r from ReadingLog r join r.book b where b.isbn13 = :isbn and r.user.email = :email")
-    Optional<ReadingLog> findByUserEmail(String isbn, String email);
+    Optional<ReadingLog> findByIsbnAndEmail(String isbn, String email);
 }

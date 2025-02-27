@@ -39,7 +39,6 @@ public class BookUserCollection {
         }
         this.user = user;
         user.getBookUserCollections().add(this);
-
     }
 
     public void setBook(Book book) {

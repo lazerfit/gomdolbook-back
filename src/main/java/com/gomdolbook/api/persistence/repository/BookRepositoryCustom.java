@@ -12,4 +12,5 @@ public interface BookRepositoryCustom {
 
     Optional<BookAndReadingLogDTO> findByUserEmailAndIsbn(String email, String isbn);
     List<BookListResponseDTO> findByReadingStatus(Status status, String email);
+    Optional<Status> getStatus(String isbn, String email);
 }

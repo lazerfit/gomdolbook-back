@@ -1,14 +1,16 @@
-package com.gomdolbook.api.utils;
+package com.gomdolbook.api.service.Auth;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
 
-public class SecurityUtil {
+@RequiredArgsConstructor
+@Service
+public class SecurityService {
 
-    private SecurityUtil() {}
-
-    public static String getUserEmailFromSecurityContext() {
+    public String getUserEmailFromSecurityContext() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt principal = (Jwt) authentication.getPrincipal();
         return principal.getClaim("email");

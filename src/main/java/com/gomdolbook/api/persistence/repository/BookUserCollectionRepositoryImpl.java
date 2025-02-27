@@ -8,9 +8,10 @@ import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
 import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.QBookCollectionCoverDTO;
 import com.gomdolbook.api.api.dto.QBookListResponseDTO;
-import com.querydsl.core.types.dsl.Expressions;
+import com.gomdolbook.api.persistence.entity.BookUserCollection;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,15 +39,28 @@ public class BookUserCollectionRepositoryImpl implements BookUserCollectionRepos
 
         return queryFactory.select(
                 new QBookListResponseDTO(
-                    bookUserCollection.book.cover,
-                    bookUserCollection.book.title,
-                    bookUserCollection.book.isbn13,
-                    Expressions.booleanTemplate("case when coalesce(count({0}), 0) > 0 then true else false end", bookUserCollection.book.readingLog)
+                    book.cover,
+                    book.title,
+                    book.isbn13,
+                    book.readingLog.status
                 )
-            ).from(bookUserCollection)
+            ).from(userCollection)
+            .leftJoin(bookUserCollection).on(userCollection.id.eq(bookUserCollection.userCollection.id))
+            .leftJoin(book).on(book.id.eq(bookUserCollection.book.id))
+            .where(userCollection.user.email.eq(email))
+            .where(userCollection.name.eq(name))
+            .fetch();
+    }
+
+    @Override
+    public Optional<BookUserCollection> findByIsbnAndName(String isbn, String name, String email) {
+        BookUserCollection collection = queryFactory.selectFrom(bookUserCollection)
             .where(bookUserCollection.user.email.eq(email))
             .where(bookUserCollection.userCollection.name.eq(name))
-            .fetch();
+            .where(bookUserCollection.book.isbn13.eq(isbn))
+            .fetchOne();
+
+        return Optional.ofNullable(collection);
     }
 
 }

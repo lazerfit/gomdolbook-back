@@ -1,5 +1,6 @@
 package com.gomdolbook.api.controllers;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -114,7 +115,7 @@ class UserCollectionControllerTest {
     }
 
     @Test
-    void addBooks() throws Exception{
+    void addBook() throws Exception{
         BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
             .title("소년이 온다")
             .author("한강")
@@ -129,9 +130,17 @@ class UserCollectionControllerTest {
 
         String data = objectMapper.writeValueAsString(requestDTO);
 
-        mockMvc.perform(post("/v1/collection/{name}/addBook", "컬렉션")
+        mockMvc.perform(post("/v1/collection/{name}/book/add", "컬렉션")
                 .content(data)
                 .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andDo(print());
+    }
+
+    @Test
+    void deleteBook() throws Exception{
+        mockMvc.perform(delete("/v1/collection/{name}/book/delete", "컬렉션")
+                .param("isbn", "9788991290402"))
             .andExpect(status().isOk())
             .andDo(print());
     }

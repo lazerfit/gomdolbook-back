@@ -1,7 +1,5 @@
 package com.gomdolbook.api.service;
 
-import static com.gomdolbook.api.utils.SecurityUtil.getUserEmailFromSecurityContext;
-
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
@@ -19,6 +17,7 @@ import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import com.gomdolbook.api.persistence.entity.User;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
+import com.gomdolbook.api.service.Auth.SecurityService;
 import com.gomdolbook.api.service.Auth.UserService;
 import java.net.URI;
 import java.time.Duration;
@@ -51,6 +50,7 @@ public class BookService {
     private final UserService userService;
     private final WebClient webClient;
     private final ReadingLogRepository readingLogRepository;
+    private final SecurityService securityService;
 
     @Value("${api.aladin.ttbkey}")
     private String ttbkey;
@@ -74,10 +74,11 @@ public class BookService {
             .orElseThrow(() -> new BookNotFoundException(isbn13));
     }  
 
+    @PreAuthorizeWithContainsUser
     @Transactional(readOnly = true)
     public String getStatus(String isbn13) {
-        Optional<Book> book = bookRepository.findByIsbn13(isbn13);
-        return book.map(value -> value.getReadingLog().getStatus().name()).orElseThrow(() -> new BookNotFoundException(isbn13));
+        Optional<Status> status = bookRepository.getStatus(isbn13, securityService.getUserEmailFromSecurityContext());
+        return status.map(Enum::name).orElse("NEW");
     }
 
     @Transactional(readOnly = true)
@@ -143,7 +144,20 @@ public class BookService {
 
     @UserCheckAndSave
     @Transactional
-    public Book saveBook(BookSaveRequestDTO requestDTO) {
+    public Book saveOrUpdateBook(BookSaveRequestDTO requestDTO) {
+        User user = userService.findByEmail(securityService.getUserEmailFromSecurityContext())
+            .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
+
+        Optional<ReadingLog> readingLogOptional = readingLogRepository.findByIsbnAndEmail(
+            requestDTO.isbn13(),
+            securityService.getUserEmailFromSecurityContext());
+
+        if (readingLogOptional.isPresent()) {
+            ReadingLog readingLog = readingLogOptional.get();
+            readingLog.updateStatus(validateAndConvertStatus(requestDTO.status()));
+
+            return readingLog.getBook();
+        }
         Book book = Book.builder()
             .title(requestDTO.title())
             .author(requestDTO.author())
@@ -155,19 +169,19 @@ public class BookService {
             .publisher(requestDTO.publisher())
             .build();
 
-        String status = (requestDTO.status() == null || requestDTO.status().isBlank()) ? "NEW" : requestDTO.status();
+        String status = (requestDTO.status() == null || requestDTO.status().isBlank()) ? "NEW"
+            : requestDTO.status();
 
         ReadingLog readingLog = new ReadingLog(validateAndConvertStatus(status), "",
             "", "");
 
-        User user = userService.findByEmail(getUserEmailFromSecurityContext())
-            .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
         readingLog.setUser(user);
 
         ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
         book.setReadingLog(savedReadingLog);
 
         return bookRepository.save(book);
+
     }
 
     private Status validateAndConvertStatus(String statusString)

@@ -20,6 +20,7 @@ import com.gomdolbook.api.persistence.entity.User.Role;
 import com.gomdolbook.api.persistence.repository.BookRepository;
 import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import com.gomdolbook.api.persistence.repository.UserRepository;
+import com.gomdolbook.api.util.TestDataFactory;
 import java.io.IOException;
 import java.util.List;
 import okhttp3.mockwebserver.MockResponse;
@@ -66,7 +67,10 @@ class BookControllerTest {
     ObjectMapper objectMapper;
 
     @Autowired
-    private UserRepository userRepository;
+    UserRepository userRepository;
+
+    @Autowired
+    TestDataFactory testDataFactory;
 
     @BeforeAll
     static void setUp() throws IOException {
@@ -189,7 +193,17 @@ class BookControllerTest {
             .build();
 
         mockMvc.perform(post("/v1/book/save")
-                .param("email", "redkafe@daum.net")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDTO)))
+            .andExpect(status().isNoContent())
+            .andDo(print());
+    }
+
+    @Test
+    void updateStatus() throws Exception {
+        BookSaveRequestDTO requestDTO = testDataFactory.getBookSaveRequestDTO("FINISHED");
+
+        mockMvc.perform(post("/v1/book/save")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDTO)))
             .andExpect(status().isNoContent())

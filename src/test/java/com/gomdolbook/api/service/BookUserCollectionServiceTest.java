@@ -234,4 +234,13 @@ class BookUserCollectionServiceTest {
         assertThat(collection1).hasSize(2);
     }
 
+    @Test
+    void deleteBook() {
+        bookUserCollectionService.deleteBook("9788991290402", "컬렉션");
+
+        List<BookListResponseDTO> c = bookUserCollectionService.getCollection("컬렉션");
+
+        assertThat(c).isEmpty();
+    }
+
 }

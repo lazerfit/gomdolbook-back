@@ -1,13 +1,12 @@
 package com.gomdolbook.api.api.controllers;
 
-import static com.gomdolbook.api.utils.SecurityUtil.getUserEmailFromSecurityContext;
-
 import com.gomdolbook.api.api.dto.APIResponseDTO;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
+import com.gomdolbook.api.service.Auth.SecurityService;
 import com.gomdolbook.api.service.BookService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,12 +29,13 @@ import reactor.core.publisher.Mono;
 public class BookController {
 
     private final BookService bookService;
+    private final SecurityService securityService;
 
     @GetMapping("/v1/readingLog")
     public ResponseEntity<APIResponseDTO<BookAndReadingLogDTO>> getReadingLog(
         @RequestParam(name = "isbn") String isbn) {
         BookAndReadingLogDTO readingLog = bookService.getReadingLogV2(
-            getUserEmailFromSecurityContext(), isbn);
+            securityService.getUserEmailFromSecurityContext(), isbn);
         APIResponseDTO<BookAndReadingLogDTO> dto = new APIResponseDTO<>(
             readingLog);
         return new ResponseEntity<>(dto, HttpStatus.OK);
@@ -63,7 +63,7 @@ public class BookController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void saveBook(@Validated @RequestBody BookSaveRequestDTO saveRequest) {
 
-        bookService.saveBook(saveRequest);
+        bookService.saveOrUpdateBook(saveRequest);
     }
 
     @GetMapping("/v1/book/Library")

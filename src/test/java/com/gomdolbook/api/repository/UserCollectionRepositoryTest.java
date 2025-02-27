@@ -17,15 +17,15 @@ import com.gomdolbook.api.persistence.repository.UserCollectionRepository;
 import com.gomdolbook.api.persistence.repository.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.transaction.annotation.Transactional;
 
-@Transactional
+
 @Import({QueryDslConfig.class, TestDataFactory.class})
 @DataJpaTest
 class UserCollectionRepositoryTest {
@@ -68,8 +68,8 @@ class UserCollectionRepositoryTest {
     void tearDown() {
         bookUserCollectionRepository.deleteAll();
         bookRepository.deleteAll();
-        userCollectionRepository.deleteAll();
         readingLogRepository.deleteAll();
+        userCollectionRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -88,7 +88,15 @@ class UserCollectionRepositoryTest {
             "user@gmail.com");
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().isReadingLogExists()).isTrue();
+        assertThat(result.getFirst().status().name()).isEqualTo("READING");
+    }
+
+    @Test
+    void getEmptyCollection() {
+        List<BookListResponseDTO> result = bookUserCollectionRepository.getCollection("test",
+            "user@gmail.com");
+
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -134,6 +142,36 @@ class UserCollectionRepositoryTest {
         assertThat(collectionDTO.getLast().name()).isEqualTo("컬렉션");
         assertThat(collectionDTO.getFirst().cover()).isEqualTo("image");
         assertThat(collectionDTO.getLast().cover()).isEqualTo("image 한강");
+    }
+
+    @Test
+    void findSpecificBook() {
+        Book book =  Book.builder()
+            .title("소년이 온다")
+            .author("한강")
+            .pubDate("2014-05-19")
+            .description("노벨 문학상")
+            .isbn13("9788936434120")
+            .cover("image 한강")
+            .categoryName("노벨문학상")
+            .publisher("창비")
+            .build();
+        Book saved = bookRepository.save(book);
+        testDataFactory.createBookUserCollection(saved, collection, user);
+
+        Optional<BookUserCollection> result = bookUserCollectionRepository.findByIsbnAndName(
+            "9788991290402", "컬렉션", "user@gmail.com");
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getBook().getTitle()).isEqualTo("펠로폰네소스 전쟁사");
+    }
+
+    @Test
+    void deleteOne() {
+        Optional<BookUserCollection> result = bookUserCollectionRepository.findByIsbnAndName(
+            "9788991290402", "컬렉션", "user@gmail.com");
+
+        result.ifPresent(bookUserCollectionRepository::delete);
     }
 
 }

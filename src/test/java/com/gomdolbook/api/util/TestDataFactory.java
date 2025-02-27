@@ -1,5 +1,6 @@
 package com.gomdolbook.api.util;
 
+import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.BookUserCollection;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
@@ -73,4 +74,24 @@ public class TestDataFactory {
         book.setReadingLog(readingLog);
         return bookRepository.save(book);
     }
+
+    public BookSaveRequestDTO getBookSaveRequestDTO(String status) {
+        return new BookSaveRequestDTO(
+            "펠로폰네소스 전쟁사", "투퀴디데스", "2011-06-30", "투퀴디세스가 집필한 전쟁사", "9788991290402", "image",
+            "서양고대사", "도서출판 숲", status);
+    }
+
+    public Book getBook() {
+        return Book.builder()
+            .title("펠로폰네소스 전쟁사")
+            .author("투퀴디데스")
+            .pubDate("2011-06-30")
+            .description("투퀴디세스가 집필한 전쟁사")
+            .isbn13("9788991290402")
+            .cover("image")
+            .categoryName("서양고대사")
+            .publisher("도서출판 숲")
+            .build();
+    }
+
 }

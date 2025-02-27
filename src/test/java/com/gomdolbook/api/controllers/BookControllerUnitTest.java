@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gomdolbook.api.api.controllers.BookController;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
@@ -14,7 +15,6 @@ import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
-import com.gomdolbook.api.service.Auth.UserService;
 import com.gomdolbook.api.service.BookService;
 import java.util.Collections;
 import java.util.List;
@@ -45,8 +45,8 @@ class BookControllerUnitTest {
     @Autowired
     WebTestClient webTestClient;
 
-    @MockitoBean
-    UserService userService;
+    @Autowired
+    ObjectMapper objectMapper;
 
     @Test
     void getReadingLogV1() throws Exception {
@@ -155,8 +155,8 @@ class BookControllerUnitTest {
 
     @Test
     void getLibrary() throws Exception {
-        BookListResponseDTO dto1 = new BookListResponseDTO("img", "title1", "isbn", true);
-        BookListResponseDTO dto2 = new BookListResponseDTO("img2", "title2", "isbn", true);
+        BookListResponseDTO dto1 = new BookListResponseDTO("img", "title1", "isbn", Status.READING);
+        BookListResponseDTO dto2 = new BookListResponseDTO("img2", "title2", "isbn", Status.READING);
         List<BookListResponseDTO> list = List.of(dto1, dto2);
 
         Mockito.when(bookService.getLibrary("READING")).thenReturn(list);

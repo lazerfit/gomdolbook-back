@@ -197,6 +197,12 @@ class BookServiceTest {
     }
 
     @Test
+    void getStatusNotExists() {
+        String status = bookService.getStatus("test");
+        assertThat(status).isEqualTo("NEW");
+    }
+
+    @Test
     void getLibrary() {
         List<BookListResponseDTO> library = bookService.getLibrary("READING");
         assertThat(library).hasSize(1);
@@ -210,28 +216,40 @@ class BookServiceTest {
     }
 
     @Test
-    void saveBookWithStatus() {
+    void saveOrUpdateBookWithStatus() {
         BookSaveRequestDTO bookSaveRequestDTO = new BookSaveRequestDTO(
             "t", "a", "p", "d", "i", "c", "cn", "p", "READING");
 
-        Book book = bookService.saveBook(bookSaveRequestDTO);
+        Book book = bookService.saveOrUpdateBook(bookSaveRequestDTO);
         assertThat(book.getReadingLog().getStatus().name()).isEqualTo("READING");
     }
 
     @Test
-    void saveBookWithNullStatus() {
+    void saveOrUpdateBookWithNullStatus() {
         BookSaveRequestDTO bookSaveRequestDTO = new BookSaveRequestDTO(
             "t", "a", "p", "d", "i", "c", "cn", "p", null);
 
-        Book book = bookService.saveBook(bookSaveRequestDTO);
+        Book book = bookService.saveOrUpdateBook(bookSaveRequestDTO);
         assertThat(book.getReadingLog().getStatus().name()).isEqualTo("NEW");
     }
 
     @Test
-    void saveBookWithBlankStatus() {
+    void saveOrUpdateBookWithBlankStatus() {
         BookSaveRequestDTO bookSaveRequestDTO = new BookSaveRequestDTO(
             "t", "a", "p", "d", "i", "c", "cn", "p", "");
-        Book book = bookService.saveBook(bookSaveRequestDTO);
+        Book book = bookService.saveOrUpdateBook(bookSaveRequestDTO);
         assertThat(book.getReadingLog().getStatus().name()).isEqualTo("NEW");
+    }
+
+    @Test
+    void updateStatus() {
+        BookSaveRequestDTO bookSaveRequestDTO = new BookSaveRequestDTO(
+            "펠로폰네소스 전쟁사", "투퀴디데스", "2011-06-30", "투퀴디세스가 집필한 전쟁사", "9788991290402", "image",
+            "서양고대사", "도서출판 숲", "FINISHED");
+
+        Book book = bookService.saveOrUpdateBook(bookSaveRequestDTO);
+
+        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("FINISHED");
+
     }
 }
