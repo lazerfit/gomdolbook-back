@@ -15,18 +15,21 @@ create table user_collection
         foreign key (user_id) references users (user_id)
 );
 
+
 create table IF NOT EXISTS reading_log
 (
     readinglog_id bigint auto_increment
         primary key,
-    note1         varchar(255)                            null,
-    note2         varchar(255)                            null,
-    note3         varchar(255)                            null,
+    note1         varchar(255)                                   null,
+    note2         varchar(255)                                   null,
+    note3         varchar(255)                                   null,
     status        enum ('FINISHED', 'READING', 'TO_READ', 'NEW') null,
-    user_id       bigint                                  null,
+    user_id       bigint                                         null,
+    rating        int                                            null,
     constraint FKREADINGLOGUSERS
         foreign key (user_id) references users (user_id)
 );
+
 
 create table book
 (

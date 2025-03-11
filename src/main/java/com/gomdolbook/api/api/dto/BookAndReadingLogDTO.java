@@ -9,22 +9,15 @@ import lombok.Getter;
 public class BookAndReadingLogDTO {
 
     private final String title;
-
     private final String author;
-
     private final String pubDate;
-
     private final String cover;
-
     private final String publisher;
-
     private final Status status;
-
     private final String note1;
-
     private final String note2;
-
     private final String note3;
+    private final Integer rating;
 
     @QueryProjection
     public BookAndReadingLogDTO(Book book) {
@@ -37,10 +30,11 @@ public class BookAndReadingLogDTO {
         note1 = book.getReadingLog().getNote1();
         note2 = book.getReadingLog().getNote2();
         note3 = book.getReadingLog().getNote3();
+        rating = book.getReadingLog().getRating();
     }
 
     public BookAndReadingLogDTO(String title, String author, String pubDate, String cover,
-        String publisher, Status status, String note1, String note2, String note3) {
+        String publisher, Status status, String note1, String note2, String note3, Integer rating) {
         this.title = title;
         this.author = author;
         this.pubDate = pubDate;
@@ -50,5 +44,6 @@ public class BookAndReadingLogDTO {
         this.note1 = note1;
         this.note2 = note2;
         this.note3 = note3;
+        this.rating = rating;
     }
 }

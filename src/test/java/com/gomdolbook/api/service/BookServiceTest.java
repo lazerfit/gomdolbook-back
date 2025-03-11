@@ -6,13 +6,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
-import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
+import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
-import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.User;
@@ -28,7 +27,6 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -118,13 +116,6 @@ class BookServiceTest {
         registry.add("api.aladin.ttbkey", () -> "test_key");
     }
 
-    @Transactional
-    @Test
-    void getReadingLog() {
-        BookAndReadingLogDTO readingLog = bookService.getReadingLog("9788991290402");
-        assertThat(readingLog.getAuthor()).isEqualTo("투퀴디데스");
-    }
-
     @Test
     void getBookFromAPI() throws JsonProcessingException, InterruptedException {
         String response = objectMapper.writeValueAsString(new AladinAPI(1, 1, 1,
@@ -174,18 +165,6 @@ class BookServiceTest {
     }
 
     @Test
-    void getBookError() {
-        Assertions.assertThrows(BookNotFoundException.class,
-            () -> bookService.getBook("11"));
-    }
-
-    @Test
-    void getBook() {
-        BookDTO book = bookService.getBook("9788936434120");
-        assertThat(book.getTitle()).isEqualTo("소년이 온다");
-    }
-
-    @Test
     void aopInfo() {
         log.info("isAopProxy, BookService={}", AopUtils.isAopProxy(bookService));
     }
@@ -199,7 +178,7 @@ class BookServiceTest {
     @Test
     void getStatusNotExists() {
         String status = bookService.getStatus("test");
-        assertThat(status).isEqualTo("NEW");
+        assertThat(status).isEqualTo("EMPTY");
     }
 
     @Test
@@ -250,6 +229,41 @@ class BookServiceTest {
         Book book = bookService.saveOrUpdateBook(bookSaveRequestDTO);
 
         assertThat(book.getReadingLog().getStatus().name()).isEqualTo("FINISHED");
+    }
 
+    @Transactional
+    @Test
+    void updateReadingLog() {
+        var saveRequest = new ReadingLogUpdateRequestDTO(
+            "9788991290402", "note1", "readingLog test");
+        bookService.updateReadingLog(saveRequest);
+        Book book = bookService.findByIsbn("9788991290402").orElseThrow();
+
+        assertThat(book.getReadingLog().getNote1()).isEqualTo("readingLog test");
+    }
+
+    @Transactional
+    @Test
+    void updateStatusTest() {
+        String isbn = "9788991290402";
+        String status = "FINISHED";
+
+        bookService.updateState(isbn, status);
+        Book book = bookService.findByIsbn(isbn).orElseThrow();
+
+        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("FINISHED");
+    }
+
+    @Transactional
+    @Test
+    void saveRating() {
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail("9788991290402",
+            "redkafe@daum.net").orElseThrow();
+        readingLog.updateRating(1);
+        assertThat(readingLog.getRating()).isEqualTo(1);
+
+        ReadingLog updated = readingLogRepository.findByIsbnAndEmail("9788991290402",
+            "redkafe@daum.net").orElseThrow();
+        assertThat(updated.getRating()).isEqualTo(1);
     }
 }

@@ -34,14 +34,17 @@ public class ReadingLog {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String note1;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String note2;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String note3;
+
+    @Column
+    private Integer rating;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "USER_ID")
@@ -50,11 +53,12 @@ public class ReadingLog {
     @OneToOne(mappedBy = "readingLog", fetch = FetchType.LAZY)
     private Book book;
 
-    public ReadingLog(Status status, String note1, String note2, String note3) {
+    public ReadingLog(Status status, String note1, String note2, String note3, int rating) {
         this.status = status;
         this.note1 = note1;
         this.note2 = note2;
         this.note3 = note3;
+        this.rating = rating;
     }
 
     public void setUser(User user) {
@@ -69,5 +73,21 @@ public class ReadingLog {
 
     public void updateStatus(Status status) {
         this.status = status;
+    }
+
+    public void updateNote1(String value) {
+        this.note1 = value;
+    }
+
+    public void updateNote2(String value) {
+        this.note2 = value;
+    }
+
+    public void updateNote3(String value) {
+        this.note3 = value;
+    }
+
+    public void updateRating(Integer rating) {
+        this.rating = rating;
     }
 }

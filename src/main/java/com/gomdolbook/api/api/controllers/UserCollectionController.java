@@ -64,10 +64,10 @@ public class UserCollectionController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/v1/collection/{name}/book/delete")
+    @DeleteMapping("/v1/collection/{name}/book/remove")
     public ResponseEntity<Void> deleteBook(@RequestParam("isbn") String isbn,
         @PathVariable String name) {
-
+            bookUserCollectionService.deleteBook(isbn, name);
         return ResponseEntity.ok().build();
     }
 }

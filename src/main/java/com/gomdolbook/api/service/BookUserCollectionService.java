@@ -6,6 +6,7 @@ import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.config.annotations.UserCheckAndSave;
+import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.errors.UserValidationError;
 import com.gomdolbook.api.models.BookUserCollectionModel;
 import com.gomdolbook.api.persistence.entity.Book;
@@ -91,7 +92,10 @@ public class BookUserCollectionService {
             isbn, collectionName,
             securityService.getUserEmailFromSecurityContext());
 
-        book.ifPresent(bookUserCollectionRepository::delete);
+        book.ifPresentOrElse(bookUserCollectionRepository::delete,
+            () ->  {
+                throw new BookNotFoundException("Can't find book : " + isbn);});
+
     }
 
 }

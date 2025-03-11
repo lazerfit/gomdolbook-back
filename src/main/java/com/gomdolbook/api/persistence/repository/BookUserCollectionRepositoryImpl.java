@@ -2,6 +2,7 @@ package com.gomdolbook.api.persistence.repository;
 
 import static com.gomdolbook.api.persistence.entity.QBook.book;
 import static com.gomdolbook.api.persistence.entity.QBookUserCollection.bookUserCollection;
+import static com.gomdolbook.api.persistence.entity.QUser.user;
 import static com.gomdolbook.api.persistence.entity.QUserCollection.userCollection;
 
 import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
@@ -14,8 +15,10 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Repository;
 
 @Slf4j
+@Repository
 @RequiredArgsConstructor
 public class BookUserCollectionRepositoryImpl implements BookUserCollectionRepositoryCustom{
 
@@ -55,6 +58,9 @@ public class BookUserCollectionRepositoryImpl implements BookUserCollectionRepos
     @Override
     public Optional<BookUserCollection> findByIsbnAndName(String isbn, String name, String email) {
         BookUserCollection collection = queryFactory.selectFrom(bookUserCollection)
+            .join(bookUserCollection.user, user)
+            .join(bookUserCollection.userCollection, userCollection)
+            .join(bookUserCollection.book, book)
             .where(bookUserCollection.user.email.eq(email))
             .where(bookUserCollection.userCollection.name.eq(name))
             .where(bookUserCollection.book.isbn13.eq(isbn))

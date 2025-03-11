@@ -35,7 +35,7 @@ public class TestDataFactory {
     BookUserCollectionRepository bookUserCollectionRepository;
 
     public ReadingLog createReadingLog(User user) {
-        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
+        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3", 0);
         readingLog.setUser(user);
         return readingLogRepository.save(readingLog);
     }

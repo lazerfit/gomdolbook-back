@@ -1,5 +1,6 @@
 package com.gomdolbook.api.controllers;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
@@ -41,7 +43,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 @WithMockCustomUser
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -87,7 +88,7 @@ class BookControllerTest {
     void setup1() {
         User user = new User("redkafe@daum.net", "img", Role.USER);
         userRepository.save(user);
-        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3");
+        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3", 0);
         readingLog.setUser(user);
         readingLogRepository.save(readingLog);
         Book book = Book.builder()
@@ -162,11 +163,13 @@ class BookControllerTest {
 
     @Test
     void getReadingLog() throws Exception {
-        mockMvc.perform(get("/v1/readingLog/9788991290402")
-            .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/v1/readingLog")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("isbn", "9788991290402"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
             .andExpect(jsonPath("$.data.author").value("투퀴디데스"))
+            .andExpect(jsonPath("$.data.rating").value(0))
             .andDo(print());
 
     }
@@ -258,22 +261,6 @@ class BookControllerTest {
             .andDo(print());
     }
 
-    @Transactional
-    @Test
-    void getReadingLogV2() throws Exception{
-        User user = new User("user@gmail.com", "img", Role.USER);
-        userRepository.save(user);
-        Book book = bookRepository.findByIsbn13("9788991290402").orElseThrow();
-        book.getReadingLog().setUser(user);
-
-        mockMvc.perform(get("/v2/readingLog")
-                .param("email", "user@gmail.com")
-                .param("isbn", "9788991290402"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
-            .andDo(print());
-    }
-
     @Test
     void getLibrary() throws Exception {
         mockMvc.perform(get("/v1/book/Library")
@@ -287,6 +274,36 @@ class BookControllerTest {
         mockMvc.perform(get("/v1/book/Library")
                 .param("status", "FINISHED"))
             .andExpect(status().isNoContent())
+            .andDo(print());
+    }
+
+    @Test
+    void saveReadingLog() throws Exception {
+        var saveRequest = new ReadingLogUpdateRequestDTO("9788991290402", "note1", "note1 saved");
+
+        mockMvc.perform(post("/v1/readingLog/save")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(saveRequest)))
+            .andExpect(status().isOk())
+            .andDo(print());
+    }
+
+    @Test
+    void updateStatusTest() throws Exception {
+        mockMvc.perform(post("/v1/status/9788991290402/update")
+                .param("status", "FINISHED")
+                .with(csrf()))
+            .andExpect(status().isOk())
+            .andDo(print());
+    }
+
+    @Test
+    void saveRate() throws Exception {
+        mockMvc.perform(post("/v1/readingLog/rating/update")
+                .param("isbn", "9788991290402")
+                .param("star", "5")
+                .with(csrf()))
+            .andExpect(status().isOk())
             .andDo(print());
     }
 }

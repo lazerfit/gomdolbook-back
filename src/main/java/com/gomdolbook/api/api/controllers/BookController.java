@@ -6,8 +6,10 @@ import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
+import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
 import com.gomdolbook.api.service.Auth.SecurityService;
 import com.gomdolbook.api.service.BookService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,11 +36,24 @@ public class BookController {
     @GetMapping("/v1/readingLog")
     public ResponseEntity<APIResponseDTO<BookAndReadingLogDTO>> getReadingLog(
         @RequestParam(name = "isbn") String isbn) {
-        BookAndReadingLogDTO readingLog = bookService.getReadingLogV2(
+        BookAndReadingLogDTO readingLog = bookService.getReadingLog(
             securityService.getUserEmailFromSecurityContext(), isbn);
         APIResponseDTO<BookAndReadingLogDTO> dto = new APIResponseDTO<>(
             readingLog);
         return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
+
+    @PostMapping("/v1/readingLog/update")
+    public ResponseEntity<String> saveReadingLog(@RequestBody @Valid ReadingLogUpdateRequestDTO request) {
+        bookService.updateReadingLog(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/v1/readingLog/rating/update")
+    public ResponseEntity<String> updateRating(@RequestParam("isbn") String isbn,
+        @RequestParam("star") int star) {
+        bookService.saveOrUpdateRating(star, isbn);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/v1/status/{isbn}")
@@ -46,6 +61,12 @@ public class BookController {
         String status = bookService.getStatus(isbn);
         APIResponseDTO<String> responseDTO = new APIResponseDTO<>(status);
         return new ResponseEntity<>(responseDTO, HttpStatus.OK);
+    }
+
+    @PostMapping("/v1/status/{isbn}/update")
+    public ResponseEntity<String> updateStatus(@RequestParam("status") String status, @PathVariable String isbn) {
+        bookService.updateState(isbn, status);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/v1/book/{isbn}")

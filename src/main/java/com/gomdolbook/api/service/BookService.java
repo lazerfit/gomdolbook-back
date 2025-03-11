@@ -6,6 +6,7 @@ import com.gomdolbook.api.api.dto.BookDTO;
 import com.gomdolbook.api.api.dto.BookListResponseDTO;
 import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
+import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
 import com.gomdolbook.api.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.errors.BookNotFoundException;
@@ -29,9 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -41,6 +39,7 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClientRequest;
 import reactor.util.retry.Retry;
 
+@PreAuthorizeWithContainsUser
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -56,35 +55,17 @@ public class BookService {
     private String ttbkey;
 
     @UserCheckAndSave
-    public String test(String email) {
-        return "logged in";
-    }
-
     @Transactional(readOnly = true)
-    public BookAndReadingLogDTO getReadingLog(String isbn13) {
-
-        return bookRepository.findByIsbn13(isbn13).map(BookAndReadingLogDTO::new)
-            .orElseThrow(() -> new BookNotFoundException(isbn13));
-    }
-
-    @UserCheckAndSave
-    @Transactional(readOnly = true)
-    public BookAndReadingLogDTO getReadingLogV2(String email, String isbn13) {
+    public BookAndReadingLogDTO getReadingLog(String email, String isbn13) {
         return bookRepository.findByUserEmailAndIsbn(email, isbn13)
             .orElseThrow(() -> new BookNotFoundException(isbn13));
     }  
 
-    @PreAuthorizeWithContainsUser
+
     @Transactional(readOnly = true)
     public String getStatus(String isbn13) {
         Optional<Status> status = bookRepository.getStatus(isbn13, securityService.getUserEmailFromSecurityContext());
-        return status.map(Enum::name).orElse("NEW");
-    }
-
-    @Transactional(readOnly = true)
-    public BookDTO getBook(String isbn13) {
-        return bookRepository.findByIsbn13(isbn13).map(BookDTO::new)
-            .orElseThrow(() -> new BookNotFoundException(isbn13));
+        return status.map(Enum::name).orElse("EMPTY");
     }
 
     @Transactional(readOnly = true)
@@ -92,7 +73,6 @@ public class BookService {
         return bookRepository.findByIsbn13(isbn);
     }
 
-    @PreAuthorizeWithContainsUser
     public Mono<BookDTO> fetchItemFromAladin(String isbn13) {
 
         return executeFetchAladinRequest("ItemLookUp.aspx",uriBuilder -> uriBuilder
@@ -105,7 +85,6 @@ public class BookService {
             .map(BookModel::toBookDTO);
     }
 
-    @PreAuthorizeWithContainsUser
     public Mono<List<BookSearchResponseDTO>> searchBookFromAladin(String query) {
         return executeFetchAladinRequest("ItemSearch.aspx", uriBuilder -> uriBuilder
             .queryParam("ttbkey", ttbkey)
@@ -173,7 +152,7 @@ public class BookService {
             : requestDTO.status();
 
         ReadingLog readingLog = new ReadingLog(validateAndConvertStatus(status), "",
-            "", "");
+            "", "", 0);
 
         readingLog.setUser(user);
 
@@ -193,13 +172,42 @@ public class BookService {
         }
     }
 
-    @PreAuthorizeWithContainsUser
     @Transactional
     public List<BookListResponseDTO> getLibrary(String status) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Jwt principal = (Jwt) authentication.getPrincipal();
         return bookRepository.findByReadingStatus(validateAndConvertStatus(status),
-            principal.getClaim("email"));
+            securityService.getUserEmailFromSecurityContext());
     }
 
+    @Transactional
+    public void updateReadingLog(ReadingLogUpdateRequestDTO request) {
+        Book book = bookRepository.findByIsbn13(request.isbn())
+            .orElseThrow(() -> new BookNotFoundException("Cannot find book: " + request.isbn()));
+
+        ReadingLog readingLog = book.getReadingLog();
+
+        switch (request.note()) {
+            case "note1"-> readingLog.updateNote1(request.value());
+            case "note2" -> readingLog.updateNote2(request.value());
+            case "note3"-> readingLog.updateNote3(request.value());
+            default -> throw new IllegalArgumentException("Invalid note: " + request.note());
+        }
+    }
+
+    @Transactional
+    public void updateState(String isbn, String status) {
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,
+                securityService.getUserEmailFromSecurityContext())
+            .orElseThrow(() -> new BookNotFoundException("can't not find book: " + isbn));
+
+        readingLog.updateStatus(validateAndConvertStatus(status));
+    }
+
+    @Transactional
+    public void saveOrUpdateRating(int rating, String isbn) {
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,
+                securityService.getUserEmailFromSecurityContext())
+            .orElseThrow(() -> new BookNotFoundException("can't find book: " + isbn));
+
+        readingLog.updateRating(rating);
+    }
 }
