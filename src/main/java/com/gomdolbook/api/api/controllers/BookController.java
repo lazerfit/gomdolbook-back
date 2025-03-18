@@ -36,8 +36,7 @@ public class BookController {
     @GetMapping("/v1/readingLog")
     public ResponseEntity<APIResponseDTO<BookAndReadingLogDTO>> getReadingLog(
         @RequestParam(name = "isbn") String isbn) {
-        BookAndReadingLogDTO readingLog = bookService.getReadingLog(
-            securityService.getUserEmailFromSecurityContext(), isbn);
+        BookAndReadingLogDTO readingLog = bookService.getReadingLog(isbn);
         APIResponseDTO<BookAndReadingLogDTO> dto = new APIResponseDTO<>(
             readingLog);
         return new ResponseEntity<>(dto, HttpStatus.OK);
@@ -65,7 +64,7 @@ public class BookController {
 
     @PostMapping("/v1/status/{isbn}/update")
     public ResponseEntity<String> updateStatus(@RequestParam("status") String status, @PathVariable String isbn) {
-        bookService.updateState(isbn, status);
+        bookService.updateStatus(isbn, status);
         return ResponseEntity.ok().build();
     }
 
@@ -82,7 +81,7 @@ public class BookController {
 
     @PostMapping("/v1/book/save")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveBook(@Validated @RequestBody BookSaveRequestDTO saveRequest) {
+    public void saveBook(@RequestBody @Validated BookSaveRequestDTO saveRequest) {
 
         bookService.saveOrUpdateBook(saveRequest);
     }

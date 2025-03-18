@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,7 +59,7 @@ public class UserCollectionController {
     }
 
     @PostMapping("/v1/collection/{name}/book/add")
-    public ResponseEntity<Void> addBook(@RequestBody BookSaveRequestDTO dto, @PathVariable String name) {
+    public ResponseEntity<Void> addBook(@RequestBody @Validated BookSaveRequestDTO dto, @PathVariable String name) {
         bookUserCollectionService.addBook(dto, name);
 
         return ResponseEntity.ok().build();

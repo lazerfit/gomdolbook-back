@@ -34,6 +34,8 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -68,7 +70,10 @@ class BookServiceTest {
     UserRepository userRepository;
 
     @MockitoBean
-    private JwtDecoder jwtDecoder;
+    JwtDecoder jwtDecoder;
+
+    @Autowired
+    CacheManager cacheManager;
 
     @Autowired
     TestDataFactory testDataFactory;
@@ -117,7 +122,7 @@ class BookServiceTest {
     }
 
     @Test
-    void getBookFromAPI() throws JsonProcessingException, InterruptedException {
+    void getBookFromAPIWithCacheSuccess() throws JsonProcessingException, InterruptedException {
         String response = objectMapper.writeValueAsString(new AladinAPI(1, 1, 1,
             List.of(new Item("소년이 온다", "한강", "2014-05-19", "2024 노벨문학상",
                 "9788936434120", "image1", "노벨문학상",
@@ -129,18 +134,42 @@ class BookServiceTest {
                 .setBody(response)
         );
 
-        Mono<BookDTO> bookInfo = bookService.fetchItemFromAladin("9788936434120");
+        Mono<BookDTO> firstCall = bookService.fetchItemFromAladin("9788936434120");
 
-        StepVerifier.create(bookInfo)
+        StepVerifier.create(firstCall)
             .expectNextMatches(book -> book.getTitle().equals("소년이 온다"))
             .verifyComplete();
 
         RecordedRequest request = server.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
+
+        Mono<BookDTO> secondCall = bookService.fetchItemFromAladin("9788936434120");
+
+        StepVerifier.create(secondCall)
+            .expectNextMatches(book -> book.getTitle().equals("소년이 온다"))
+            .verifyComplete();
+
+        assertThat(server.getRequestCount()).isEqualTo(1);
     }
 
     @Test
-    void getBookListFromAPI() throws Exception {
+    void getBookFromAPIWith500Response() {
+        server.enqueue(new MockResponse().setResponseCode(500));
+        Mono<BookDTO> firstCall = bookService.fetchItemFromAladin("9788936434120");
+        StepVerifier.create(firstCall)
+            .expectNextCount(0)
+            .verifyComplete();
+
+        Mono<BookDTO> secondCall = bookService.fetchItemFromAladin("9788936434120");
+        StepVerifier.create(secondCall)
+            .expectNextCount(0)
+            .verifyComplete();
+
+        assertThat(server.getRequestCount()).isEqualTo(4);
+    }
+
+    @Test
+    void getBookListFromAPIWithCache() throws Exception {
         String response = objectMapper.writeValueAsString(new AladinAPI(1, 1, 1,
             List.of(new Item("소년이 온다", "한강", "2014-05-19", "2024 노벨문학상",
                 "9788936434120", "image1", "노벨문학상",
@@ -154,14 +183,22 @@ class BookServiceTest {
                 .setBody(response)
         );
 
-        Mono<List<BookSearchResponseDTO>> list = bookService.searchBookFromAladin("글쓰기");
+        Mono<List<BookSearchResponseDTO>> firstCall = bookService.searchBookFromAladin("글쓰기");
 
-        StepVerifier.create(list)
+        StepVerifier.create(firstCall)
             .expectNextMatches(book -> book.getLast().title().equals("소년이 온다1"))
             .verifyComplete();
 
         RecordedRequest request = server.takeRequest();
         assertThat(request.getMethod()).isEqualTo("GET");
+
+        Mono<List<BookSearchResponseDTO>> secondCall = bookService.searchBookFromAladin("글쓰기");
+
+        StepVerifier.create(secondCall)
+            .expectNextMatches(book -> book.getLast().title().equals("소년이 온다1"))
+            .verifyComplete();
+
+        assertThat(server.getRequestCount()).isEqualTo(1);
     }
 
     @Test
@@ -248,7 +285,7 @@ class BookServiceTest {
         String isbn = "9788991290402";
         String status = "FINISHED";
 
-        bookService.updateState(isbn, status);
+        bookService.updateStatus(isbn, status);
         Book book = bookService.findByIsbn(isbn).orElseThrow();
 
         assertThat(book.getReadingLog().getStatus().name()).isEqualTo("FINISHED");
@@ -265,5 +302,35 @@ class BookServiceTest {
         ReadingLog updated = readingLogRepository.findByIsbnAndEmail("9788991290402",
             "redkafe@daum.net").orElseThrow();
         assertThat(updated.getRating()).isEqualTo(1);
+    }
+
+    @Test
+    void getStatusCacheTest() {
+        bookService.getStatus("9788991290402");
+        Cache cache = cacheManager.getCache("statusCache");
+        assertThat(cache).isNotNull();
+        bookService.getStatus("9788991290402");
+        String cachedStatus = cache.get("redkafe@daum.net:[9788991290402]", String.class);
+        assertThat(cachedStatus).isEqualTo("READING");
+    }
+
+    @Transactional
+    @Test
+    void statusUpdateCacheTest() {
+        bookService.getStatus("9788991290402");
+        Cache cache = cacheManager.getCache("statusCache");
+        assertThat(cache).isNotNull();
+        bookService.getStatus("9788991290402");
+        String cachedStatus = cache.get("redkafe@daum.net:[9788991290402]", String.class);
+        assertThat(cachedStatus).isEqualTo("READING");
+
+        bookService.updateStatus("9788991290402", "FINISHED");
+
+        String status = bookService.getStatus("9788991290402");
+        assertThat(status).isEqualTo("FINISHED");
+        Cache cache1 = cacheManager.getCache("statusCache");
+        assertThat(cache).isNotNull();
+        String c = cache1.get("redkafe@daum.net:[9788991290402]", String.class);
+        assertThat(c).isEqualTo("FINISHED");
     }
 }

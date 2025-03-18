@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +39,7 @@ public class BookUserCollectionService {
     private final BookService bookService;
     private final SecurityService securityService;
 
+    @Cacheable(cacheNames = "collectionListCache", key = "@securityService.getUserEmailFromSecurityContext()", unless = "#result.isEmpty() ")
     @Transactional(readOnly = true)
     public List<BookCollectionCoverListResponseDTO> getCollectionList() {
         List<BookCollectionCoverDTO> results = bookUserCollectionRepository.getAllCollection(
@@ -44,6 +48,7 @@ public class BookUserCollectionService {
         return BookUserCollectionModel.toListResponseDTO(results);
     }
 
+    @Cacheable(cacheNames = "collectionCache", keyGenerator = "customKeyGenerator", unless = "#result.isEmpty()")
     @Transactional(readOnly = true)
     public List<BookListResponseDTO> getCollection(String name) {
         return bookUserCollectionRepository.getCollection(name, securityService.getUserEmailFromSecurityContext());
@@ -59,6 +64,10 @@ public class BookUserCollectionService {
         userCollectionRepository.save(userCollection);
     }
 
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "collectionCache", key = "@securityService.getCacheKey(#collectionName)"),
+        @CacheEvict(cacheNames = "collectionListCache", key = "@securityService.getUserEmailFromSecurityContext()")
+    })
     @Transactional
     public void addBook(BookSaveRequestDTO dto, String collectionName) {
         UserCollection collection = userCollectionRepository.findByName(collectionName)
@@ -86,6 +95,10 @@ public class BookUserCollectionService {
             });
     }
 
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "collectionCache", key = "@securityService.getCacheKey(#collectionName)"),
+        @CacheEvict(cacheNames = "collectionListCache", key = "@securityService.getUserEmailFromSecurityContext()")
+    })
     @Transactional
     public void deleteBook(String isbn, String collectionName) {
         Optional<BookUserCollection> book = bookUserCollectionRepository.findByIsbnAndName(
@@ -95,7 +108,6 @@ public class BookUserCollectionService {
         book.ifPresentOrElse(bookUserCollectionRepository::delete,
             () ->  {
                 throw new BookNotFoundException("Can't find book : " + isbn);});
-
     }
 
 }

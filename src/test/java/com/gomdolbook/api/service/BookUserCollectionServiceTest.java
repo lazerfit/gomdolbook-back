@@ -17,13 +17,17 @@ import com.gomdolbook.api.persistence.repository.UserCollectionRepository;
 import com.gomdolbook.api.persistence.repository.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 
+@Slf4j
 @WithMockCustomUser
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class BookUserCollectionServiceTest {
@@ -55,6 +59,9 @@ class BookUserCollectionServiceTest {
 
     @Autowired
     TestDataFactory testDataFactory;
+
+    @Autowired
+    CacheManager cacheManager;
 
     @BeforeEach
     void setUp() {
@@ -101,17 +108,7 @@ class BookUserCollectionServiceTest {
 
     @Test
     void addBookWithStatus() {
-        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
-            .title("소년이 온다")
-            .author("한강")
-            .pubDate("2014-05-19")
-            .description("노벨 문학상")
-            .isbn13("9788936434120")
-            .cover("image 한강")
-            .categoryName("노벨문학상")
-            .publisher("창비")
-            .status("READING")
-            .build();
+        BookSaveRequestDTO requestDTO = getBookSaveRequest();
 
         bookUserCollectionService.addBook(requestDTO, "컬렉션");
 
@@ -119,6 +116,23 @@ class BookUserCollectionServiceTest {
         assertThat(collectionList).hasSize(1);
         assertThat(collectionList.getLast().getName()).isEqualTo("컬렉션");
         assertThat(collectionList.getLast().getBooks().getCovers()).hasSize(2);
+    }
+
+    @Test
+    void addBookCacheTest() {
+        bookUserCollectionService.getCollectionList();
+        bookUserCollectionService.getCollectionList();
+        bookUserCollectionService.getCollection("컬렉션");
+        bookUserCollectionService.getCollection("컬렉션");
+        Cache cache = cacheManager.getCache("collectionListCache");
+        assertThat(cache.get("redkafe@daum.net")).isNotNull();
+        BookSaveRequestDTO requestDTO = getBookSaveRequest();
+
+        bookUserCollectionService.addBook(requestDTO, "컬렉션");
+        bookUserCollectionService.getCollectionList();
+        List<BookCollectionCoverListResponseDTO> list = cache.get("redkafe@daum.net", List.class);
+
+        assertThat(list.getFirst().getBooks().getCovers()).hasSize(2);
     }
 
     @Test
@@ -181,17 +195,7 @@ class BookUserCollectionServiceTest {
 
     @Test
     void getCollection2() {
-        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
-            .title("소년이 온다")
-            .author("한강")
-            .pubDate("2014-05-19")
-            .description("노벨 문학상")
-            .isbn13("9788936434120")
-            .cover("image 한강")
-            .categoryName("노벨문학상")
-            .publisher("창비")
-            .status("READING")
-            .build();
+        BookSaveRequestDTO requestDTO = getBookSaveRequest();
         bookUserCollectionService.addBook(requestDTO, "컬렉션");
 
         List<BookListResponseDTO> c = bookUserCollectionService.getCollection("컬렉션");
@@ -203,17 +207,7 @@ class BookUserCollectionServiceTest {
 
     @Test
     void testDuplicatedBookSave() {
-        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
-            .title("소년이 온다")
-            .author("한강")
-            .pubDate("2014-05-19")
-            .description("노벨 문학상")
-            .isbn13("9788936434120")
-            .cover("image 한강")
-            .categoryName("노벨문학상")
-            .publisher("창비")
-            .status("READING")
-            .build();
+        BookSaveRequestDTO requestDTO = getBookSaveRequest();
         bookUserCollectionService.addBook(requestDTO, "컬렉션");
 
         BookSaveRequestDTO requestDTO2 = BookSaveRequestDTO.builder()
@@ -241,6 +235,20 @@ class BookUserCollectionServiceTest {
         List<BookListResponseDTO> c = bookUserCollectionService.getCollection("컬렉션");
 
         assertThat(c).isEmpty();
+    }
+
+    private BookSaveRequestDTO getBookSaveRequest() {
+        return BookSaveRequestDTO.builder()
+            .title("소년이 온다")
+            .author("한강")
+            .pubDate("2014-05-19")
+            .description("노벨 문학상")
+            .isbn13("9788936434120")
+            .cover("image 한강")
+            .categoryName("노벨문학상")
+            .publisher("창비")
+            .status("READING")
+            .build();
     }
 
 }

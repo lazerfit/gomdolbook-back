@@ -60,7 +60,7 @@ class BookControllerUnitTest {
             "image", "도서출판 숲",
             Status.READING, "1", "2", "3", 1);
 
-        Mockito.when(bookService.getReadingLog("redkafe@daum.net", "testIsbn")).thenReturn(dto);
+        Mockito.when(bookService.getReadingLog("testIsbn")).thenReturn(dto);
 
         mockMvc.perform(get("/v1/readingLog")
                 .param("isbn", "testIsbn"))

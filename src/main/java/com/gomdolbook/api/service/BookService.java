@@ -1,5 +1,6 @@
 package com.gomdolbook.api.service;
 
+import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
 import com.gomdolbook.api.api.dto.BookDTO;
@@ -24,10 +25,13 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -50,32 +54,35 @@ public class BookService {
     private final WebClient webClient;
     private final ReadingLogRepository readingLogRepository;
     private final SecurityService securityService;
+    private final AsyncCache<String, AladinAPI> aladinAPIAsyncCache;
 
     @Value("${api.aladin.ttbkey}")
     private String ttbkey;
 
+    @Cacheable(cacheNames = "readingLogCache", keyGenerator = "customKeyGenerator", unless = "#result == null")
     @UserCheckAndSave
     @Transactional(readOnly = true)
-    public BookAndReadingLogDTO getReadingLog(String email, String isbn13) {
-        return bookRepository.findByUserEmailAndIsbn(email, isbn13)
-            .orElseThrow(() -> new BookNotFoundException(isbn13));
+    public BookAndReadingLogDTO getReadingLog(String isbn) {
+        return bookRepository.findByUserEmailAndIsbn(
+                securityService.getUserEmailFromSecurityContext(), isbn)
+            .orElseThrow(() -> new BookNotFoundException(isbn));
     }  
 
-
+    @Cacheable(cacheNames = "statusCache", keyGenerator = "customKeyGenerator", unless = "#result == null")
     @Transactional(readOnly = true)
-    public String getStatus(String isbn13) {
-        Optional<Status> status = bookRepository.getStatus(isbn13, securityService.getUserEmailFromSecurityContext());
+    public String getStatus(String isbn) {
+        Optional<Status> status = bookRepository.getStatus(isbn, securityService.getUserEmailFromSecurityContext());
         return status.map(Enum::name).orElse("EMPTY");
     }
 
+    @Cacheable(cacheNames = "bookByIsbnCache", key = "#isbn", unless = "#result == null or #result.isEmpty()")
     @Transactional(readOnly = true)
     public Optional<Book> findByIsbn(String isbn) {
         return bookRepository.findByIsbn13(isbn);
     }
 
     public Mono<BookDTO> fetchItemFromAladin(String isbn13) {
-
-        return executeFetchAladinRequest("ItemLookUp.aspx",uriBuilder -> uriBuilder
+        return getAladinData(isbn13,"ItemLookUp.aspx", uriBuilder -> uriBuilder
             .queryParam("ttbkey", ttbkey)
             .queryParam("ItemIdType", "ISBN13")
             .queryParam("ItemId", isbn13)
@@ -86,13 +93,27 @@ public class BookService {
     }
 
     public Mono<List<BookSearchResponseDTO>> searchBookFromAladin(String query) {
-        return executeFetchAladinRequest("ItemSearch.aspx", uriBuilder -> uriBuilder
+        return getAladinData(query, "ItemSearch.aspx", uriBuilder -> uriBuilder
             .queryParam("ttbkey", ttbkey)
             .queryParam("Query", query)
             .queryParam("Cover", "MidBig")
             .queryParam("Output", "JS")
             .queryParam("Version", "20131101").build())
             .map(BookModel::toListBookSearchResponseDTO);
+    }
+
+    private Mono<AladinAPI> getAladinData(String key,String uri, Function<UriBuilder, URI> uriBuilder) {
+        String cacheKey = uri + key;
+        return Mono.fromCompletionStage(aladinAPIAsyncCache.get(cacheKey,
+                (s, executor) -> fetchAladinData(uri, uriBuilder).exceptionally(ex -> {
+                    log.info("API 요청 실패, uri: {}, key: {}", uri, key);
+                    return null;
+                })));
+    }
+
+    private CompletableFuture<AladinAPI> fetchAladinData(String uri,
+        Function<UriBuilder, URI> uriBuilder) {
+        return executeFetchAladinRequest(uri, uriBuilder).toFuture();
     }
 
     private Mono<AladinAPI> executeFetchAladinRequest(String uri, Function<UriBuilder, URI> uriBuilder) {
@@ -121,6 +142,7 @@ public class BookService {
                     retrySignal -> log.info("[retry] {}", retrySignal.toString())));
     }
 
+    @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#requestDTO.isbn13())")
     @UserCheckAndSave
     @Transactional
     public Book saveOrUpdateBook(BookSaveRequestDTO requestDTO) {
@@ -172,12 +194,14 @@ public class BookService {
         }
     }
 
+    @Cacheable(cacheNames = "libraryCache", keyGenerator = "customKeyGenerator", unless = "#result.isEmpty()")
     @Transactional
     public List<BookListResponseDTO> getLibrary(String status) {
         return bookRepository.findByReadingStatus(validateAndConvertStatus(status),
             securityService.getUserEmailFromSecurityContext());
     }
 
+    @CacheEvict(cacheNames = "readingLogCache", key = "@securityService.getCacheKey(#request.isbn())")
     @Transactional
     public void updateReadingLog(ReadingLogUpdateRequestDTO request) {
         Book book = bookRepository.findByIsbn13(request.isbn())
@@ -193,8 +217,9 @@ public class BookService {
         }
     }
 
+    @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
-    public void updateState(String isbn, String status) {
+    public void updateStatus(String isbn, String status) {
         ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,
                 securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new BookNotFoundException("can't not find book: " + isbn));
@@ -202,6 +227,7 @@ public class BookService {
         readingLog.updateStatus(validateAndConvertStatus(status));
     }
 
+    @CacheEvict(cacheNames = "readingLogCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
     public void saveOrUpdateRating(int rating, String isbn) {
         ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,

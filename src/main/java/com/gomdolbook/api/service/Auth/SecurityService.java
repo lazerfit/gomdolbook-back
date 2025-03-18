@@ -1,5 +1,6 @@
 package com.gomdolbook.api.service.Auth;
 
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,5 +15,9 @@ public class SecurityService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Jwt principal = (Jwt) authentication.getPrincipal();
         return principal.getClaim("email");
+    }
+
+    public String getCacheKey(String value) {
+        return getUserEmailFromSecurityContext() + ":" + Arrays.toString(new Object[]{value});
     }
 }
