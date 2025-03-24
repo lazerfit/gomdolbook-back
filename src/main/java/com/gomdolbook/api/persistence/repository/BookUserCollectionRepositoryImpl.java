@@ -5,10 +5,10 @@ import static com.gomdolbook.api.persistence.entity.QBookUserCollection.bookUser
 import static com.gomdolbook.api.persistence.entity.QUser.user;
 import static com.gomdolbook.api.persistence.entity.QUserCollection.userCollection;
 
-import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
-import com.gomdolbook.api.api.dto.BookListResponseDTO;
-import com.gomdolbook.api.api.dto.QBookCollectionCoverDTO;
-import com.gomdolbook.api.api.dto.QBookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookCollectionCoverDTO;
+import com.gomdolbook.api.api.dto.book.BookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.QBookCollectionCoverDTO;
+import com.gomdolbook.api.api.dto.book.QBookListResponseDTO;
 import com.gomdolbook.api.persistence.entity.BookUserCollection;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;

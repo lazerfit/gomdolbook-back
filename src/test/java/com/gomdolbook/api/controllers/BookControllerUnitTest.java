@@ -9,10 +9,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gomdolbook.api.api.controllers.BookController;
-import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
-import com.gomdolbook.api.api.dto.BookDTO;
-import com.gomdolbook.api.api.dto.BookListResponseDTO;
-import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
+import com.gomdolbook.api.api.dto.StatusDTO;
+import com.gomdolbook.api.api.dto.book.BookAndReadingLogDTO;
+import com.gomdolbook.api.api.dto.book.BookDTO;
+import com.gomdolbook.api.api.dto.book.BookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookSearchResponseDTO;
 import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
@@ -81,7 +82,7 @@ class BookControllerUnitTest {
             .categoryName("서양고대사")
             .publisher("도서출판 숲")
             .build();
-        BookDTO bookDTO = new BookDTO(book);
+        BookDTO bookDTO = BookDTO.from(book);
 
         Mockito.when(bookService.fetchItemFromAladin("isbn")).thenReturn(Mono.just(bookDTO));
 
@@ -124,7 +125,7 @@ class BookControllerUnitTest {
 
     @Test
     void getStatus() throws Exception {
-        Mockito.when(bookService.getStatus("isbn")).thenReturn("NEW");
+        Mockito.when(bookService.getStatus("isbn")).thenReturn(StatusDTO.of("NEW"));
 
         mockMvc.perform(get("/v1/status/isbn"))
             .andExpect(status().isOk())
@@ -156,10 +157,10 @@ class BookControllerUnitTest {
     }
 
     @Test
-    void saveReadingLog() throws Exception {
+    void updateReadingLog() throws Exception {
         var saveRequest = new ReadingLogUpdateRequestDTO("9788991290402", "note1", "note1 saved");
 
-        mockMvc.perform(post("/v1/readingLog/save")
+        mockMvc.perform(post("/v1/readingLog/update")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(saveRequest)))

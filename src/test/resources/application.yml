@@ -1,7 +1,10 @@
 spring:
   jpa:
-    show-sql: true
+    show-sql: false
     defer-datasource-initialization: true
+    properties:
+      hibernate:
+        format_sql: true
     hibernate:
       ddl-auto: none
   security:
@@ -12,5 +15,9 @@ spring:
           audiences: gomdolbook
 api:
   aladin:
-    baseUrl: http://localhost
+    baseUrl: http://localhost:8081
     ttbkey: test_key
+logging:
+  level:
+    org.hibernate.type.descriptor.sql: trace
+    org.hibernate.orm.jdbc.bind: trace

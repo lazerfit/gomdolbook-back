@@ -1,4 +1,4 @@
-package com.gomdolbook.api.api.dto;
+package com.gomdolbook.api.api.dto.book;
 
 import com.querydsl.core.annotations.QueryProjection;
 

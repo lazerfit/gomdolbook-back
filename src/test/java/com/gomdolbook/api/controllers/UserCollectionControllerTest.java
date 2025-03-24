@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.book.BookSaveRequestDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
@@ -141,6 +141,14 @@ class UserCollectionControllerTest {
     void deleteBook() throws Exception{
         mockMvc.perform(delete("/v1/collection/{name}/book/remove", "컬렉션")
                 .param("isbn", "9788991290402"))
+            .andExpect(status().isOk())
+            .andDo(print());
+    }
+
+    @Test
+    void deleteCollection() throws Exception {
+        mockMvc.perform(delete("/v1/collection/delete")
+                .param("name", "컬렉션"))
             .andExpect(status().isOk())
             .andDo(print());
     }

@@ -1,6 +1,6 @@
 package com.gomdolbook.api.util;
 
-import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.book.BookSaveRequestDTO;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.BookUserCollection;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
@@ -35,7 +35,7 @@ public class TestDataFactory {
     BookUserCollectionRepository bookUserCollectionRepository;
 
     public ReadingLog createReadingLog(User user) {
-        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3", 0);
+        ReadingLog readingLog = ReadingLog.of(user, Status.READING);
         readingLog.setUser(user);
         return readingLogRepository.save(readingLog);
     }
@@ -46,17 +46,14 @@ public class TestDataFactory {
     }
 
     public UserCollection createUserCollection(String name, User user) {
-        UserCollection userCollection = new UserCollection(name);
+        UserCollection userCollection = UserCollection.of(user, name);
         userCollection.setUser(user);
         return userCollectionRepository.save(userCollection);
     }
 
     public void createBookUserCollection(Book book, UserCollection userCollection,
         User user) {
-        BookUserCollection bookUserCollection = new BookUserCollection();
-        bookUserCollection.setBook(book);
-        bookUserCollection.setUserCollection(userCollection);
-        bookUserCollection.setUser(user);
+        BookUserCollection bookUserCollection = BookUserCollection.of(user, userCollection, book);
         bookUserCollectionRepository.save(bookUserCollection);
     }
 

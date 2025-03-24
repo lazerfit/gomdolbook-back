@@ -65,5 +65,8 @@ create table book_user_collection
         foreign key (user_id) references users (user_id)
 );
 
+create index idx_buc_user_coll_book
+    on book_user_collection (user_id, user_collection_id, book_id);
+
 
 

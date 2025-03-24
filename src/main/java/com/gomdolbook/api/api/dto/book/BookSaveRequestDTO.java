@@ -1,4 +1,4 @@
-package com.gomdolbook.api.api.dto;
+package com.gomdolbook.api.api.dto.book;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;

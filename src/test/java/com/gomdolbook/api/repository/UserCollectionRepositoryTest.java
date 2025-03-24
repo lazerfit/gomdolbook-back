@@ -2,8 +2,8 @@ package com.gomdolbook.api.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
-import com.gomdolbook.api.api.dto.BookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookCollectionCoverDTO;
+import com.gomdolbook.api.api.dto.book.BookListResponseDTO;
 import com.gomdolbook.api.config.QueryDslConfig;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.BookUserCollection;
@@ -16,6 +16,8 @@ import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
 import com.gomdolbook.api.persistence.repository.UserCollectionRepository;
 import com.gomdolbook.api.persistence.repository.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
@@ -24,7 +26,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
-
 
 @Import({QueryDslConfig.class, TestDataFactory.class})
 @DataJpaTest
@@ -52,6 +53,9 @@ class UserCollectionRepositoryTest {
     @Autowired
     TestDataFactory testDataFactory;
 
+    @PersistenceContext
+    EntityManager em;
+
     @BeforeEach
     void setUp() {
         user = testDataFactory.createUser("user@gmail.com", "image");
@@ -66,6 +70,7 @@ class UserCollectionRepositoryTest {
 
     @AfterEach
     void tearDown() {
+        em.clear();
         bookUserCollectionRepository.deleteAll();
         bookRepository.deleteAll();
         readingLogRepository.deleteAll();
@@ -75,8 +80,9 @@ class UserCollectionRepositoryTest {
 
     @Test
     void findByEmail() {
-        List<BookUserCollection> byEmail = bookUserCollectionRepository.findByUserEmail(
-            "user@gmail.com");
+        User user1 = userRepository.findByEmail("user@gmail.com").orElseThrow();
+        List<BookUserCollection> byEmail = bookUserCollectionRepository.findByUser(
+            user1);
 
         assertThat(byEmail).size().isEqualTo(1);
         assertThat(byEmail.getLast().getUserCollection().getName()).isEqualTo("컬렉션");
@@ -167,11 +173,14 @@ class UserCollectionRepositoryTest {
     }
 
     @Test
-    void deleteOne() {
-        Optional<BookUserCollection> result = bookUserCollectionRepository.findByIsbnAndName(
-            "9788991290402", "컬렉션", "user@gmail.com");
+    void getOne() {
+        User user1 = userRepository.findByEmail("user@gmail.com").orElseThrow();
+        UserCollection userCollection = userCollectionRepository.findByName("컬렉션", user1.getEmail())
+            .orElseThrow();
+        List<BookUserCollection> c = bookUserCollectionRepository.findByUserAndUserCollection(
+            user1, userCollection);
 
-        result.ifPresent(bookUserCollectionRepository::delete);
+        assertThat(c).hasSize(1);
     }
 
 }

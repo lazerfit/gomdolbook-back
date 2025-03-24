@@ -3,10 +3,10 @@ package com.gomdolbook.api.persistence.repository;
 import static com.gomdolbook.api.persistence.entity.QBook.book;
 import static com.gomdolbook.api.persistence.entity.QReadingLog.readingLog;
 
-import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
-import com.gomdolbook.api.api.dto.BookListResponseDTO;
-import com.gomdolbook.api.api.dto.QBookAndReadingLogDTO;
-import com.gomdolbook.api.api.dto.QBookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookAndReadingLogDTO;
+import com.gomdolbook.api.api.dto.book.BookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.QBookAndReadingLogDTO;
+import com.gomdolbook.api.api.dto.book.QBookListResponseDTO;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;

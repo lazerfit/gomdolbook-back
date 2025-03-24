@@ -1,9 +1,8 @@
 package com.gomdolbook.api.persistence.repository;
 
-import com.gomdolbook.api.api.dto.CollectionListResponseDTO;
-import java.util.List;
+import com.gomdolbook.api.persistence.entity.UserCollection;
 
 public interface UserCollectionRepositoryCustom {
 
-    List<CollectionListResponseDTO> findByEmail(String email);
+    UserCollection findByNameAndEmail(String name, String email);
 }

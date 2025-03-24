@@ -1,18 +1,12 @@
-package com.gomdolbook.api.models;
+package com.gomdolbook.api.api.dto.book;
 
-import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
-import com.gomdolbook.api.api.dto.BookCollectionCoverListResponseDTO;
-import com.gomdolbook.api.api.dto.BookCoverDTO;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class BookUserCollectionModel {
+public record BookCollectionCoverListResponseDTO
+    (String name, BookCoverDTO books) {
 
-    private BookUserCollectionModel() {
-    }
-
-    public static List<BookCollectionCoverListResponseDTO> toListResponseDTO(
-        List<BookCollectionCoverDTO> dtoList) {
+    public static List<BookCollectionCoverListResponseDTO> from(List<BookCollectionCoverDTO> dtoList) {
         LinkedHashMap<String, BookCoverDTO> tempMap = new LinkedHashMap<>();
         for (BookCollectionCoverDTO dto : dtoList) {
             tempMap

@@ -6,10 +6,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
-import com.gomdolbook.api.api.dto.BookDTO;
-import com.gomdolbook.api.api.dto.BookListResponseDTO;
-import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
-import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
+import com.gomdolbook.api.api.dto.StatusDTO;
+import com.gomdolbook.api.api.dto.book.BookDTO;
+import com.gomdolbook.api.api.dto.book.BookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.book.BookSearchResponseDTO;
 import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
@@ -137,7 +138,7 @@ class BookServiceTest {
         Mono<BookDTO> firstCall = bookService.fetchItemFromAladin("9788936434120");
 
         StepVerifier.create(firstCall)
-            .expectNextMatches(book -> book.getTitle().equals("소년이 온다"))
+            .expectNextMatches(book -> book.title().equals("소년이 온다"))
             .verifyComplete();
 
         RecordedRequest request = server.takeRequest();
@@ -146,7 +147,7 @@ class BookServiceTest {
         Mono<BookDTO> secondCall = bookService.fetchItemFromAladin("9788936434120");
 
         StepVerifier.create(secondCall)
-            .expectNextMatches(book -> book.getTitle().equals("소년이 온다"))
+            .expectNextMatches(book -> book.title().equals("소년이 온다"))
             .verifyComplete();
 
         assertThat(server.getRequestCount()).isEqualTo(1);
@@ -208,14 +209,14 @@ class BookServiceTest {
 
     @Test
     void getStatus() {
-        String status = bookService.getStatus("9788991290402");
-        assertThat(status).isEqualTo("READING");
+        StatusDTO status = bookService.getStatus("9788991290402");
+        assertThat(status.status()).isEqualTo("READING");
     }
 
     @Test
     void getStatusNotExists() {
-        String status = bookService.getStatus("test");
-        assertThat(status).isEqualTo("EMPTY");
+        StatusDTO status = bookService.getStatus("test");
+        assertThat(status.status()).isEqualTo("EMPTY");
     }
 
     @Test
@@ -236,8 +237,10 @@ class BookServiceTest {
         BookSaveRequestDTO bookSaveRequestDTO = new BookSaveRequestDTO(
             "t", "a", "p", "d", "i", "c", "cn", "p", "READING");
 
-        Book book = bookService.saveOrUpdateBook(bookSaveRequestDTO);
-        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("READING");
+        bookService.saveBook(bookSaveRequestDTO);
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail("i", "redkafe@daum.net")
+            .orElseThrow();
+        assertThat(readingLog.getStatus().name()).isEqualTo("READING");
     }
 
     @Test
@@ -245,16 +248,20 @@ class BookServiceTest {
         BookSaveRequestDTO bookSaveRequestDTO = new BookSaveRequestDTO(
             "t", "a", "p", "d", "i", "c", "cn", "p", null);
 
-        Book book = bookService.saveOrUpdateBook(bookSaveRequestDTO);
-        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("NEW");
+        bookService.saveBook(bookSaveRequestDTO);
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail("i", "redkafe@daum.net")
+            .orElseThrow();
+        assertThat(readingLog.getStatus().name()).isEqualTo("NEW");
     }
 
     @Test
     void saveOrUpdateBookWithBlankStatus() {
         BookSaveRequestDTO bookSaveRequestDTO = new BookSaveRequestDTO(
             "t", "a", "p", "d", "i", "c", "cn", "p", "");
-        Book book = bookService.saveOrUpdateBook(bookSaveRequestDTO);
-        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("NEW");
+        bookService.saveBook(bookSaveRequestDTO);
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail("i", "redkafe@daum.net")
+            .orElseThrow();
+        assertThat(readingLog.getStatus().name()).isEqualTo("READING");
     }
 
     @Test
@@ -263,9 +270,10 @@ class BookServiceTest {
             "펠로폰네소스 전쟁사", "투퀴디데스", "2011-06-30", "투퀴디세스가 집필한 전쟁사", "9788991290402", "image",
             "서양고대사", "도서출판 숲", "FINISHED");
 
-        Book book = bookService.saveOrUpdateBook(bookSaveRequestDTO);
-
-        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("FINISHED");
+        bookService.saveBook(bookSaveRequestDTO);
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail("i", "redkafe@daum.net")
+            .orElseThrow();
+        assertThat(readingLog.getStatus().name()).isEqualTo("FINISHED");
     }
 
     @Transactional
@@ -326,8 +334,8 @@ class BookServiceTest {
 
         bookService.updateStatus("9788991290402", "FINISHED");
 
-        String status = bookService.getStatus("9788991290402");
-        assertThat(status).isEqualTo("FINISHED");
+        StatusDTO status = bookService.getStatus("9788991290402");
+        assertThat(status.status()).isEqualTo("FINISHED");
         Cache cache1 = cacheManager.getCache("statusCache");
         assertThat(cache).isNotNull();
         String c = cache1.get("redkafe@daum.net:[9788991290402]", String.class);

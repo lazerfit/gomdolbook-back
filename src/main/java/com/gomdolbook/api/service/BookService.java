@@ -2,17 +2,17 @@ package com.gomdolbook.api.service;
 
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.gomdolbook.api.api.dto.AladinAPI;
-import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
-import com.gomdolbook.api.api.dto.BookDTO;
-import com.gomdolbook.api.api.dto.BookListResponseDTO;
-import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
-import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookAndReadingLogDTO;
+import com.gomdolbook.api.api.dto.book.BookDTO;
+import com.gomdolbook.api.api.dto.book.BookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.book.BookSearchResponseDTO;
 import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
+import com.gomdolbook.api.api.dto.StatusDTO;
 import com.gomdolbook.api.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.errors.BookNotFoundException;
 import com.gomdolbook.api.errors.UserValidationError;
-import com.gomdolbook.api.models.BookModel;
 import com.gomdolbook.api.persistence.entity.Book;
 import com.gomdolbook.api.persistence.entity.ReadingLog;
 import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
@@ -70,15 +70,15 @@ public class BookService {
 
     @Cacheable(cacheNames = "statusCache", keyGenerator = "customKeyGenerator", unless = "#result == null")
     @Transactional(readOnly = true)
-    public String getStatus(String isbn) {
+    public StatusDTO getStatus(String isbn) {
         Optional<Status> status = bookRepository.getStatus(isbn, securityService.getUserEmailFromSecurityContext());
-        return status.map(Enum::name).orElse("EMPTY");
+        return StatusDTO.of(status.map(Enum::name).orElse("EMPTY"));
     }
 
-    @Cacheable(cacheNames = "bookByIsbnCache", key = "#isbn", unless = "#result == null or #result.isEmpty()")
+    @Cacheable(cacheNames = "bookByIsbnCache", key = "#isbn", unless = "#result == null")
     @Transactional(readOnly = true)
     public Optional<Book> findByIsbn(String isbn) {
-        return bookRepository.findByIsbn13(isbn);
+        return bookRepository.findByIsbn(isbn);
     }
 
     public Mono<BookDTO> fetchItemFromAladin(String isbn13) {
@@ -89,7 +89,7 @@ public class BookService {
             .queryParam("Cover", "Big")
             .queryParam("Output", "JS")
             .queryParam("Version", "20131101").build())
-            .map(BookModel::toBookDTO);
+            .map(BookDTO::from);
     }
 
     public Mono<List<BookSearchResponseDTO>> searchBookFromAladin(String query) {
@@ -99,7 +99,7 @@ public class BookService {
             .queryParam("Cover", "MidBig")
             .queryParam("Output", "JS")
             .queryParam("Version", "20131101").build())
-            .map(BookModel::toListBookSearchResponseDTO);
+            .map(BookSearchResponseDTO::from);
     }
 
     private Mono<AladinAPI> getAladinData(String key,String uri, Function<UriBuilder, URI> uriBuilder) {
@@ -142,47 +142,29 @@ public class BookService {
                     retrySignal -> log.info("[retry] {}", retrySignal.toString())));
     }
 
-    @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#requestDTO.isbn13())")
+    @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#request.isbn13())")
     @UserCheckAndSave
     @Transactional
-    public Book saveOrUpdateBook(BookSaveRequestDTO requestDTO) {
+    public Book saveBook(BookSaveRequestDTO request) {
         User user = userService.findByEmail(securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
+        Book book = createBookWithReadingLog(request, user);
+        bookRepository.saveAndFlush(book);
+        return book;
+    }
 
-        Optional<ReadingLog> readingLogOptional = readingLogRepository.findByIsbnAndEmail(
-            requestDTO.isbn13(),
-            securityService.getUserEmailFromSecurityContext());
+    private Book createBookWithReadingLog(BookSaveRequestDTO request, User user) {
+        Book book = Book.of(request);
+        ReadingLog readingLog = setDefaultReadingLog(request, user);
+        book.setReadingLog(readingLog);
+        return book;
+    }
 
-        if (readingLogOptional.isPresent()) {
-            ReadingLog readingLog = readingLogOptional.get();
-            readingLog.updateStatus(validateAndConvertStatus(requestDTO.status()));
-
-            return readingLog.getBook();
-        }
-        Book book = Book.builder()
-            .title(requestDTO.title())
-            .author(requestDTO.author())
-            .pubDate(requestDTO.pubDate())
-            .description(requestDTO.description())
-            .isbn13(requestDTO.isbn13())
-            .cover(requestDTO.cover())
-            .categoryName(requestDTO.categoryName())
-            .publisher(requestDTO.publisher())
-            .build();
-
+    private ReadingLog setDefaultReadingLog(BookSaveRequestDTO requestDTO, User user) {
         String status = (requestDTO.status() == null || requestDTO.status().isBlank()) ? "NEW"
             : requestDTO.status();
-
-        ReadingLog readingLog = new ReadingLog(validateAndConvertStatus(status), "",
-            "", "", 0);
-
-        readingLog.setUser(user);
-
-        ReadingLog savedReadingLog = readingLogRepository.save(readingLog);
-        book.setReadingLog(savedReadingLog);
-
-        return bookRepository.save(book);
-
+        ReadingLog readingLog = ReadingLog.of(user, validateAndConvertStatus(status));
+        return readingLogRepository.saveAndFlush(readingLog);
     }
 
     private Status validateAndConvertStatus(String statusString)
@@ -204,7 +186,7 @@ public class BookService {
     @CacheEvict(cacheNames = "readingLogCache", key = "@securityService.getCacheKey(#request.isbn())")
     @Transactional
     public void updateReadingLog(ReadingLogUpdateRequestDTO request) {
-        Book book = bookRepository.findByIsbn13(request.isbn())
+        Book book = bookRepository.findByIsbn(request.isbn())
             .orElseThrow(() -> new BookNotFoundException("Cannot find book: " + request.isbn()));
 
         ReadingLog readingLog = book.getReadingLog();
@@ -229,7 +211,7 @@ public class BookService {
 
     @CacheEvict(cacheNames = "readingLogCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
-    public void saveOrUpdateRating(int rating, String isbn) {
+    public void updateRating(int rating, String isbn) {
         ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,
                 securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new BookNotFoundException("can't find book: " + isbn));

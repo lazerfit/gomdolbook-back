@@ -11,7 +11,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gomdolbook.api.api.dto.AladinAPI;
 import com.gomdolbook.api.api.dto.AladinAPI.Item;
-import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.book.BookSaveRequestDTO;
 import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.persistence.entity.Book;
@@ -88,7 +88,7 @@ class BookControllerTest {
     void setup1() {
         User user = new User("redkafe@daum.net", "img", Role.USER);
         userRepository.save(user);
-        ReadingLog readingLog = new ReadingLog(Status.READING, "1", "2", "3", 0);
+        ReadingLog readingLog = ReadingLog.of(user, Status.READING);
         readingLog.setUser(user);
         readingLogRepository.save(readingLog);
         Book book = Book.builder()
@@ -109,6 +109,7 @@ class BookControllerTest {
     void teardown() {
         bookRepository.deleteAll();
         readingLogRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     @DynamicPropertySource
@@ -176,7 +177,8 @@ class BookControllerTest {
 
     @Test
     void getReadingLog_return_error() throws Exception {
-        mockMvc.perform(get("/v1/readingLog/111")
+        mockMvc.perform(get("/v1/readingLog")
+                .param("isbn", "111")
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().is4xxClientError());
     }
@@ -238,7 +240,8 @@ class BookControllerTest {
 
     @Test
     void HttpRequestMethodNotSupportedException() throws Exception {
-        mockMvc.perform(post("/v1/readingLog/11"))
+        mockMvc.perform(post("/v1/readingLog")
+                .param("isbn","111"))
             .andExpect(status().is4xxClientError())
             .andExpect(jsonPath("$.errors").value(
                 "POST method is not supported for this request. Supported methods are GET "))
@@ -255,7 +258,8 @@ class BookControllerTest {
 
     @Test
     void BookNotFound() throws Exception {
-        mockMvc.perform(get("/v1/readingLog/1234"))
+        mockMvc.perform(get("/v1/readingLog")
+                .param("isbn","1234"))
             .andExpect(status().is4xxClientError())
             .andExpect(jsonPath("$.errors").value("Can't find Book: 1234"))
             .andDo(print());
@@ -278,10 +282,10 @@ class BookControllerTest {
     }
 
     @Test
-    void saveReadingLog() throws Exception {
+    void updateReadingLog() throws Exception {
         var saveRequest = new ReadingLogUpdateRequestDTO("9788991290402", "note1", "note1 saved");
 
-        mockMvc.perform(post("/v1/readingLog/save")
+        mockMvc.perform(post("/v1/readingLog/update")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(saveRequest)))
             .andExpect(status().isOk())

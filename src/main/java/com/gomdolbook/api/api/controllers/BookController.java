@@ -1,13 +1,13 @@
 package com.gomdolbook.api.api.controllers;
 
 import com.gomdolbook.api.api.dto.APIResponseDTO;
-import com.gomdolbook.api.api.dto.BookAndReadingLogDTO;
-import com.gomdolbook.api.api.dto.BookDTO;
-import com.gomdolbook.api.api.dto.BookListResponseDTO;
-import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
-import com.gomdolbook.api.api.dto.BookSearchResponseDTO;
 import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
-import com.gomdolbook.api.service.Auth.SecurityService;
+import com.gomdolbook.api.api.dto.StatusDTO;
+import com.gomdolbook.api.api.dto.book.BookAndReadingLogDTO;
+import com.gomdolbook.api.api.dto.book.BookDTO;
+import com.gomdolbook.api.api.dto.book.BookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookSaveRequestDTO;
+import com.gomdolbook.api.api.dto.book.BookSearchResponseDTO;
 import com.gomdolbook.api.service.BookService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -31,7 +30,6 @@ import reactor.core.publisher.Mono;
 public class BookController {
 
     private final BookService bookService;
-    private final SecurityService securityService;
 
     @GetMapping("/v1/readingLog")
     public ResponseEntity<APIResponseDTO<BookAndReadingLogDTO>> getReadingLog(
@@ -43,27 +41,27 @@ public class BookController {
     }
 
     @PostMapping("/v1/readingLog/update")
-    public ResponseEntity<String> saveReadingLog(@RequestBody @Valid ReadingLogUpdateRequestDTO request) {
+    public ResponseEntity<String> updateReadingLog(@RequestBody @Valid ReadingLogUpdateRequestDTO request) {
         bookService.updateReadingLog(request);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/v1/readingLog/rating/update")
-    public ResponseEntity<String> updateRating(@RequestParam("isbn") String isbn,
+    public ResponseEntity<Void> updateRating(@RequestParam("isbn") String isbn,
         @RequestParam("star") int star) {
-        bookService.saveOrUpdateRating(star, isbn);
+        bookService.updateRating(star, isbn);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/v1/status/{isbn}")
-    public ResponseEntity<APIResponseDTO<String>> getStatus(@PathVariable String isbn) {
-        String status = bookService.getStatus(isbn);
-        APIResponseDTO<String> responseDTO = new APIResponseDTO<>(status);
+    public ResponseEntity<APIResponseDTO<StatusDTO>> getStatus(@PathVariable String isbn) {
+        StatusDTO status = bookService.getStatus(isbn);
+        APIResponseDTO<StatusDTO> responseDTO = new APIResponseDTO<>(status);
         return new ResponseEntity<>(responseDTO, HttpStatus.OK);
     }
 
     @PostMapping("/v1/status/{isbn}/update")
-    public ResponseEntity<String> updateStatus(@RequestParam("status") String status, @PathVariable String isbn) {
+    public ResponseEntity<Void> updateStatus(@RequestParam("status") String status, @PathVariable String isbn) {
         bookService.updateStatus(isbn, status);
         return ResponseEntity.ok().build();
     }
@@ -80,10 +78,9 @@ public class BookController {
     }
 
     @PostMapping("/v1/book/save")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void saveBook(@RequestBody @Validated BookSaveRequestDTO saveRequest) {
-
-        bookService.saveOrUpdateBook(saveRequest);
+    public ResponseEntity<Void> saveBook(@RequestBody @Validated BookSaveRequestDTO saveRequest) {
+        bookService.saveBook(saveRequest);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/v1/book/Library")

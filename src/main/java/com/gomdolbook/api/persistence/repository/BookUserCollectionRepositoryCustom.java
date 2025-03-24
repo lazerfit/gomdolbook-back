@@ -1,7 +1,7 @@
 package com.gomdolbook.api.persistence.repository;
 
-import com.gomdolbook.api.api.dto.BookCollectionCoverDTO;
-import com.gomdolbook.api.api.dto.BookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookCollectionCoverDTO;
+import com.gomdolbook.api.api.dto.book.BookListResponseDTO;
 import com.gomdolbook.api.persistence.entity.BookUserCollection;
 import java.util.List;
 import java.util.Optional;

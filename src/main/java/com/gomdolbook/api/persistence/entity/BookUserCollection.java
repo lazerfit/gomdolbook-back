@@ -8,11 +8,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 public class BookUserCollection {
 
@@ -33,12 +34,22 @@ public class BookUserCollection {
     @JoinColumn(name = "USER_ID")
     private User user;
 
+    public static BookUserCollection of(User user, UserCollection collection, Book book) {
+        BookUserCollection buc = new BookUserCollection();
+        buc.setUser(user);
+        buc.setUserCollection(collection);
+        buc.setBook(book);
+        return buc;
+    }
+
     public void setUser(User user) {
         if (this.user != null) {
             user.getBookUserCollections().remove(this);
         }
         this.user = user;
-        user.getBookUserCollections().add(this);
+        if (user != null && !user.getBookUserCollections().contains(this)) {
+            user.getBookUserCollections().add(this);
+        }
     }
 
     public void setBook(Book book) {
@@ -46,7 +57,9 @@ public class BookUserCollection {
             book.getBookUserCollections().remove(this);
         }
         this.book = book;
-        book.getBookUserCollections().add(this);
+        if (book != null && !book.getBookUserCollections().contains(this)) {
+            book.getBookUserCollections().add(this);
+        }
     }
 
     public void setUserCollection(UserCollection userCollection) {
@@ -54,7 +67,8 @@ public class BookUserCollection {
             userCollection.getBookUserCollections().remove(this);
         }
         this.userCollection = userCollection;
-        userCollection.getBookUserCollections().add(this);
-
+        if (userCollection != null && !userCollection.getBookUserCollections().contains(this)) {
+            userCollection.getBookUserCollections().add(this);
+        }
     }
 }

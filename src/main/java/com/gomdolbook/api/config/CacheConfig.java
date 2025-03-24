@@ -31,7 +31,7 @@ public class CacheConfig {
     @Bean
     public AsyncCache<String, AladinAPI> caffeineAsyncCacheForAladin() {
         return Caffeine.newBuilder()
-            .expireAfterWrite(60, TimeUnit.HOURS)
+            .expireAfterWrite(2, TimeUnit.HOURS)
             .initialCapacity(100)
             .maximumSize(10_000)
             .buildAsync();

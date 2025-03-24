@@ -1,9 +1,9 @@
 package com.gomdolbook.api.api.controllers;
 
 import com.gomdolbook.api.api.dto.APIResponseDTO;
-import com.gomdolbook.api.api.dto.BookCollectionCoverListResponseDTO;
-import com.gomdolbook.api.api.dto.BookSaveRequestDTO;
-import com.gomdolbook.api.api.dto.BookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookCollectionCoverListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookListResponseDTO;
+import com.gomdolbook.api.api.dto.book.BookSaveRequestDTO;
 import com.gomdolbook.api.service.BookUserCollectionService;
 import java.net.URI;
 import java.util.List;
@@ -56,6 +56,12 @@ public class UserCollectionController {
             .toUri();
 
         return ResponseEntity.created(uri).build();
+    }
+
+    @DeleteMapping("/v1/collection/delete")
+    public ResponseEntity<Void> deleteCollection(@RequestParam("name") String name) {
+        bookUserCollectionService.deleteCollection(name);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/v1/collection/{name}/book/add")
