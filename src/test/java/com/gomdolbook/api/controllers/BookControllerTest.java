@@ -9,19 +9,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gomdolbook.api.api.dto.AladinAPI;
-import com.gomdolbook.api.api.dto.AladinAPI.Item;
-import com.gomdolbook.api.api.dto.book.BookSaveRequestDTO;
-import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
+import com.gomdolbook.api.application.book.dto.AladinResponseData;
+import com.gomdolbook.api.application.book.dto.AladinResponseData.Item;
+import com.gomdolbook.api.application.book.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
-import com.gomdolbook.api.persistence.entity.Book;
-import com.gomdolbook.api.persistence.entity.ReadingLog;
-import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
-import com.gomdolbook.api.persistence.entity.User;
-import com.gomdolbook.api.persistence.entity.User.Role;
-import com.gomdolbook.api.persistence.repository.BookRepository;
-import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
-import com.gomdolbook.api.persistence.repository.UserRepository;
+import com.gomdolbook.api.domain.models.book.Book;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.user.User;
+import com.gomdolbook.api.domain.models.user.User.Role;
+import com.gomdolbook.api.domain.models.book.BookRepository;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
 import java.io.IOException;
 import java.util.List;
@@ -120,7 +119,7 @@ class BookControllerTest {
 
     @Test
     void fetchItemFromAladin() throws JsonProcessingException {
-        String response = objectMapper.writeValueAsString(new AladinAPI(1, 1, 1,
+        String response = objectMapper.writeValueAsString(new AladinResponseData(1, 1, 1,
             List.of(new Item("소년이 온다", "한강", "2014-05-19", "2024 노벨문학상",
                 "9788936434120", "image1", "노벨문학상",
                 "창비"))));
@@ -140,7 +139,7 @@ class BookControllerTest {
 
     @Test
     void searchBook() throws Exception {
-        String response = objectMapper.writeValueAsString(new AladinAPI(1, 1, 1,
+        String response = objectMapper.writeValueAsString(new AladinResponseData(1, 1, 1,
             List.of(new Item("소년이 온다", "한강", "2014-05-19", "2024 노벨문학상",
                 "9788936434120", "image1", "노벨문학상",
                 "창비"), new Item("소년이 온다1", "한강1", "2014-06-19", "2025 노벨문학상",

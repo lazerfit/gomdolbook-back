@@ -2,12 +2,12 @@ package com.gomdolbook.api.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.gomdolbook.api.config.QueryDslConfig;
-import com.gomdolbook.api.persistence.entity.ReadingLog;
-import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
-import com.gomdolbook.api.persistence.entity.User;
-import com.gomdolbook.api.persistence.repository.BookRepository;
-import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
+import com.gomdolbook.api.common.config.QueryDslConfig;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.user.User;
+import com.gomdolbook.api.domain.models.book.BookRepository;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
 import com.gomdolbook.api.util.TestDataFactory;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -66,7 +66,7 @@ class ReadingLogRepositoryTest {
         );
         ReadingLog readingLog = readingLogRepository.findById(saved.getId())
             .orElseThrow(() -> new RuntimeException("찾을 수 없습니다."));
-        readingLog.updateRating(5);
+        readingLog.changeRating(5);
         assertThat(readingLog.getRating()).isEqualTo(5);
     }
 }

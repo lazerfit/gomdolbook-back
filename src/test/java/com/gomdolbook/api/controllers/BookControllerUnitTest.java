@@ -8,18 +8,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gomdolbook.api.api.controllers.BookController;
-import com.gomdolbook.api.api.dto.StatusDTO;
-import com.gomdolbook.api.api.dto.book.BookAndReadingLogDTO;
-import com.gomdolbook.api.api.dto.book.BookDTO;
-import com.gomdolbook.api.api.dto.book.BookListResponseDTO;
-import com.gomdolbook.api.api.dto.book.BookSearchResponseDTO;
-import com.gomdolbook.api.api.dto.ReadingLogUpdateRequestDTO;
+import com.gomdolbook.api.application.book.web.BookController;
+import com.gomdolbook.api.application.book.dto.StatusData;
+import com.gomdolbook.api.application.book.BookApplicationService;
+import com.gomdolbook.api.application.book.dto.BookData;
+import com.gomdolbook.api.application.book.dto.BookListData;
+import com.gomdolbook.api.application.book.dto.SearchedBookData;
 import com.gomdolbook.api.config.WithMockCustomUser;
-import com.gomdolbook.api.persistence.entity.Book;
-import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
-import com.gomdolbook.api.service.Auth.SecurityService;
-import com.gomdolbook.api.service.BookService;
+import com.gomdolbook.api.domain.models.book.Book;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
+import com.gomdolbook.api.domain.services.SecurityService;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -41,7 +39,7 @@ import reactor.core.publisher.Mono;
 class BookControllerUnitTest {
 
     @MockitoBean
-    BookService bookService;
+    BookApplicationService bookApplicationService;
 
     @MockitoBean
     SecurityService securityService;
@@ -56,21 +54,6 @@ class BookControllerUnitTest {
     ObjectMapper objectMapper;
 
     @Test
-    void getReadingLog() throws Exception {
-        BookAndReadingLogDTO dto = new BookAndReadingLogDTO("펠로폰네소스 전쟁사", "투퀴디데스", "2011-06-30",
-            "image", "도서출판 숲",
-            Status.READING, "1", "2", "3", 1);
-
-        Mockito.when(bookService.getReadingLog("testIsbn")).thenReturn(dto);
-
-        mockMvc.perform(get("/v1/readingLog")
-                .param("isbn", "testIsbn"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.rating").value(1))
-            .andDo(print());
-    }
-
-    @Test
     void getBookFromAPI() {
         Book book = Book.builder()
             .title("펠로폰네소스 전쟁사")
@@ -82,9 +65,10 @@ class BookControllerUnitTest {
             .categoryName("서양고대사")
             .publisher("도서출판 숲")
             .build();
-        BookDTO bookDTO = BookDTO.from(book);
+        BookData bookData = BookData.from(book);
 
-        Mockito.when(bookService.fetchItemFromAladin("isbn")).thenReturn(Mono.just(bookDTO));
+        Mockito.when(bookApplicationService.fetchItemFromAladin("isbn")).thenReturn(Mono.just(
+            bookData));
 
         webTestClient.get().uri("/v1/book/isbn")
             .exchange()
@@ -95,7 +79,7 @@ class BookControllerUnitTest {
 
     @Test
     void searchBook() {
-        List<BookSearchResponseDTO> dtoList = List.of(BookSearchResponseDTO.builder()
+        List<SearchedBookData> dtoList = List.of(SearchedBookData.builder()
             .title("소년이 온다")
             .author("한강")
             .isbn13("isbn")
@@ -103,7 +87,7 @@ class BookControllerUnitTest {
             .pubDate("2014-05-19")
             .description("2024 노벨문학상")
             .publisher("창비")
-            .build(), BookSearchResponseDTO.builder()
+            .build(), SearchedBookData.builder()
             .title("소년이 온다1")
             .author("한강1")
             .isbn13("isbn1")
@@ -113,7 +97,7 @@ class BookControllerUnitTest {
             .publisher("창비1")
             .build());
 
-        Mockito.when(bookService.searchBookFromAladin("글쓰기")).thenReturn(Mono.just(dtoList));
+        Mockito.when(bookApplicationService.searchBookFromAladin("글쓰기")).thenReturn(Mono.just(dtoList));
 
         webTestClient.get().uri(uriBuilder -> uriBuilder
             .path("/v1/book/search")
@@ -125,7 +109,7 @@ class BookControllerUnitTest {
 
     @Test
     void getStatus() throws Exception {
-        Mockito.when(bookService.getStatus("isbn")).thenReturn(StatusDTO.of("NEW"));
+        Mockito.when(bookApplicationService.getStatus("isbn")).thenReturn(StatusData.of("NEW"));
 
         mockMvc.perform(get("/v1/status/isbn"))
             .andExpect(status().isOk())
@@ -135,11 +119,11 @@ class BookControllerUnitTest {
 
     @Test
     void getLibrary() throws Exception {
-        BookListResponseDTO dto1 = new BookListResponseDTO("img", "title1", "isbn", Status.READING);
-        BookListResponseDTO dto2 = new BookListResponseDTO("img2", "title2", "isbn", Status.READING);
-        List<BookListResponseDTO> list = List.of(dto1, dto2);
+        BookListData dto1 = new BookListData("img", "title1", "isbn", Status.READING);
+        BookListData dto2 = new BookListData("img2", "title2", "isbn", Status.READING);
+        List<BookListData> list = List.of(dto1, dto2);
 
-        Mockito.when(bookService.getLibrary("READING")).thenReturn(list);
+        Mockito.when(bookApplicationService.getLibrary("READING")).thenReturn(list);
 
         mockMvc.perform(get("/v1/book/Library").param("status", "READING"))
             .andExpect(status().isOk())
@@ -149,7 +133,7 @@ class BookControllerUnitTest {
 
     @Test
     void getLibraryEmpty() throws Exception {
-        Mockito.when(bookService.getLibrary("READING")).thenReturn(Collections.emptyList());
+        Mockito.when(bookApplicationService.getLibrary("READING")).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/v1/book/Library").param("status", "READING"))
             .andExpect(status().isNoContent())

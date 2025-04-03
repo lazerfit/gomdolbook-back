@@ -1,18 +1,18 @@
 package com.gomdolbook.api.util;
 
-import com.gomdolbook.api.api.dto.book.BookSaveRequestDTO;
-import com.gomdolbook.api.persistence.entity.Book;
-import com.gomdolbook.api.persistence.entity.BookUserCollection;
-import com.gomdolbook.api.persistence.entity.ReadingLog;
-import com.gomdolbook.api.persistence.entity.ReadingLog.Status;
-import com.gomdolbook.api.persistence.entity.User;
-import com.gomdolbook.api.persistence.entity.User.Role;
-import com.gomdolbook.api.persistence.entity.UserCollection;
-import com.gomdolbook.api.persistence.repository.BookRepository;
-import com.gomdolbook.api.persistence.repository.BookUserCollectionRepository;
-import com.gomdolbook.api.persistence.repository.ReadingLogRepository;
-import com.gomdolbook.api.persistence.repository.UserCollectionRepository;
-import com.gomdolbook.api.persistence.repository.UserRepository;
+import com.gomdolbook.api.application.book.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.domain.models.book.Book;
+import com.gomdolbook.api.domain.models.bookCollection.BookCollection;
+import com.gomdolbook.api.domain.models.collection.Collection;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.user.User;
+import com.gomdolbook.api.domain.models.user.User.Role;
+import com.gomdolbook.api.domain.models.book.BookRepository;
+import com.gomdolbook.api.domain.models.bookCollection.BookCollectionRepository;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.collection.CollectionRepository;
+import com.gomdolbook.api.domain.models.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class TestDataFactory {
 
     @Autowired
-    UserCollectionRepository userCollectionRepository;
+    CollectionRepository collectionRepository;
 
     @Autowired
     ReadingLogRepository readingLogRepository;
@@ -32,7 +32,7 @@ public class TestDataFactory {
     UserRepository userRepository;
 
     @Autowired
-    BookUserCollectionRepository bookUserCollectionRepository;
+    BookCollectionRepository bookCollectionRepository;
 
     public ReadingLog createReadingLog(User user) {
         ReadingLog readingLog = ReadingLog.of(user, Status.READING);
@@ -45,16 +45,16 @@ public class TestDataFactory {
         return userRepository.save(user);
     }
 
-    public UserCollection createUserCollection(String name, User user) {
-        UserCollection userCollection = UserCollection.of(user, name);
-        userCollection.setUser(user);
-        return userCollectionRepository.save(userCollection);
+    public Collection createUserCollection(String name, User user) {
+        Collection collection = Collection.of(user, name);
+        collection.setUser(user);
+        return collectionRepository.save(collection);
     }
 
-    public void createBookUserCollection(Book book, UserCollection userCollection,
+    public void createBookUserCollection(Book book, Collection collection,
         User user) {
-        BookUserCollection bookUserCollection = BookUserCollection.of(user, userCollection, book);
-        bookUserCollectionRepository.save(bookUserCollection);
+        BookCollection bookCollection = BookCollection.of(user, collection, book);
+        bookCollectionRepository.save(bookCollection);
     }
 
     public Book createBook(ReadingLog readingLog) {
