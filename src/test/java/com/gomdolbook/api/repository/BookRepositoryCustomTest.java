@@ -2,9 +2,9 @@ package com.gomdolbook.api.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.BookListData;
-import com.gomdolbook.api.application.book.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.common.config.QueryDslConfig;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
@@ -61,14 +61,14 @@ class BookRepositoryCustomTest {
         Book saved = bookRepository.findByIsbn("9788991290402").orElseThrow();
 
         assertThat(saved.getAuthor()).isEqualTo("투퀴디데스");
-        assertThat(saved.getReadingLog().getNote1()).isEqualTo("");
+        assertThat(saved.getReadingLog().getNote1()).isEmpty();
     }
 
     @Transactional
     @Test
     void updateStatus() {
-        BookSaveRequestDTO request = testDataFactory.getBookSaveRequestDTO("FINISHED");
-        Book book = bookRepository.findByIsbn(request.isbn13()).orElseThrow();
+        BookSaveCommand request = testDataFactory.getBookSaveRequestDTO("FINISHED");
+        Book book = bookRepository.findByIsbn(request.isbn()).orElseThrow();
 
         if (!book.getReadingLog().getStatus().name().equals(request.status())) {
             book.getReadingLog().changeStatus(Status.FINISHED);

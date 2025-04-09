@@ -8,19 +8,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gomdolbook.api.application.book.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.application.book.BookApplicationService;
+import com.gomdolbook.api.application.book.command.BookSaveCommand;
+import com.gomdolbook.api.application.bookCollection.BookCollectionApplicationService;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
-import com.gomdolbook.api.domain.models.collection.Collection;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
-import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.bookCollection.BookCollectionRepository;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.collection.Collection;
 import com.gomdolbook.api.domain.models.collection.CollectionRepository;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.UserRepository;
-import com.gomdolbook.api.application.book.BookApplicationService;
-import com.gomdolbook.api.application.bookCollection.BookCollectionApplicationService;
 import com.gomdolbook.api.util.TestDataFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -116,19 +116,11 @@ class CollectionControllerTest {
 
     @Test
     void addBook() throws Exception{
-        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
-            .title("소년이 온다")
-            .author("한강")
-            .pubDate("2014-05-19")
-            .description("노벨 문학상")
-            .isbn13("9788936434120")
-            .cover("image 한강")
-            .categoryName("노벨문학상")
-            .publisher("창비")
-            .status("READING")
-            .build();
+        BookSaveCommand bookSaveCommand = new BookSaveCommand("펠로폰네소스 전쟁사"
+            , "투퀴디데스", "2011-06-30", "전쟁사", "9788991290402", "image"
+            , "서양고대사", "도서출판 숲", "READING");
 
-        String data = objectMapper.writeValueAsString(requestDTO);
+        String data = objectMapper.writeValueAsString(bookSaveCommand);
 
         mockMvc.perform(post("/v1/collection/{name}/book/add", "컬렉션")
                 .content(data)

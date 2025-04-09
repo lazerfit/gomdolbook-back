@@ -9,18 +9,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.application.book.command.ReadingLogUpdateCommand;
 import com.gomdolbook.api.application.book.dto.AladinResponseData;
 import com.gomdolbook.api.application.book.dto.AladinResponseData.Item;
-import com.gomdolbook.api.application.book.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.User.Role;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
 import java.io.IOException;
@@ -184,55 +184,39 @@ class BookControllerTest {
 
     @Test
     void saveBook() throws Exception {
-        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
-            .title("펠로폰네소스 전쟁사")
-            .author("투퀴디데스")
-            .pubDate("2011-06-30")
-            .description("투퀴디세스가 집필한 전쟁사")
-            .isbn13("9788991290402")
-            .cover("image")
-            .categoryName("서양고대사")
-            .publisher("도서출판 숲")
-            .status("READING")
-            .build();
+        BookSaveCommand bookSaveCommand = new BookSaveCommand("펠로폰네소스 전쟁사"
+            , "투퀴디데스", "2011-06-30", "전쟁사", "9788991290402", "image"
+            , "서양고대사", "도서출판 숲", "READING");
 
         mockMvc.perform(post("/v1/book/save")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDTO)))
+                .content(objectMapper.writeValueAsString(bookSaveCommand)))
             .andExpect(status().isNoContent())
             .andDo(print());
     }
 
     @Test
     void updateStatus() throws Exception {
-        BookSaveRequestDTO requestDTO = testDataFactory.getBookSaveRequestDTO("FINISHED");
+        BookSaveCommand command = testDataFactory.getBookSaveRequestDTO("FINISHED");
 
         mockMvc.perform(post("/v1/book/save")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDTO)))
+                .content(objectMapper.writeValueAsString(command)))
             .andExpect(status().isNoContent())
             .andDo(print());
     }
 
     @Test
     void saveBook_request_null_error() throws Exception {
-        BookSaveRequestDTO requestDTO = BookSaveRequestDTO.builder()
-            .title("펠로폰네소스 전쟁사")
-            .author("투퀴디데스")
-            .pubDate("2011-06-30")
-            .description("투퀴디세스가 집필한 전쟁사")
-            .isbn13("9788991290402")
-            .cover("image")
-            .categoryName("서양고대사")
-            .publisher(null)
-            .status("READING")
-            .build();
+        BookSaveCommand bookSaveCommand = new BookSaveCommand(null
+            , "투퀴디데스", "2011-06-30", "전쟁사", "9788991290402", "image"
+            , "서양고대사", "도서출판 숲", "READING");
 
         mockMvc.perform(post("/v1/book/save")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .content(objectMapper.writeValueAsString(requestDTO)))
+                .content(objectMapper.writeValueAsString(bookSaveCommand)))
             .andExpect(status().is4xxClientError())
-            .andExpect(jsonPath("$.errors").value("publisher: must not be blank"))
+            .andExpect(jsonPath("$.errors").value("title: must not be blank"))
             .andDo(print());
 
     }

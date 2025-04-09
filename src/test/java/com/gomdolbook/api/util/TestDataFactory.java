@@ -1,6 +1,6 @@
 package com.gomdolbook.api.util;
 
-import com.gomdolbook.api.application.book.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.bookCollection.BookCollection;
@@ -76,10 +76,10 @@ public class TestDataFactory {
         return bookRepository.save(book);
     }
 
-    public BookSaveRequestDTO getBookSaveRequestDTO(String status) {
-        return new BookSaveRequestDTO(
-            "펠로폰네소스 전쟁사", "투퀴디데스", "2011-06-30", "투퀴디세스가 집필한 전쟁사", "9788991290402", "image",
-            "서양고대사", "도서출판 숲", status);
+    public BookSaveCommand getBookSaveRequestDTO(String status) {
+        return new BookSaveCommand("펠로폰네소스 전쟁사"
+            , "투퀴디데스", "2011-06-30", "전쟁사", "9788991290402", "image"
+            , "서양고대사", "도서출판 숲", status);
     }
 
     public Book getBook() {

@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.gomdolbook'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1'
 
 java {
     toolchain {
@@ -13,11 +13,13 @@ java {
     }
 }
 
+bootJar {
+    archiveFileName = "gomdolbook.jar"
+}
+
 repositories {
     mavenCentral()
 }
-
-
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
