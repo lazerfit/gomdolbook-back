@@ -6,11 +6,11 @@ import com.gomdolbook.api.application.book.dto.BookCollectionCoverData;
 import com.gomdolbook.api.application.book.dto.BookListData;
 import com.gomdolbook.api.common.config.QueryDslConfig;
 import com.gomdolbook.api.domain.models.book.Book;
+import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.bookCollection.BookCollection;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.collection.Collection;
-import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.bookCollection.BookCollectionRepository;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.collection.CollectionRepository;
@@ -132,7 +132,7 @@ class CollectionRepositoryTest {
             .author("한강")
             .pubDate("2014-05-19")
             .description("노벨 문학상")
-            .isbn13("9788936434120")
+            .isbn("9788936434120")
             .cover("image 한강")
             .categoryName("노벨문학상")
             .publisher("창비")
@@ -157,7 +157,7 @@ class CollectionRepositoryTest {
             .author("한강")
             .pubDate("2014-05-19")
             .description("노벨 문학상")
-            .isbn13("9788936434120")
+            .isbn("9788936434120")
             .cover("image 한강")
             .categoryName("노벨문학상")
             .publisher("창비")

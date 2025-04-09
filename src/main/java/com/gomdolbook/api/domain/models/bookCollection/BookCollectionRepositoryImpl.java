@@ -1,14 +1,15 @@
 package com.gomdolbook.api.domain.models.bookCollection;
 
-import static com.gomdolbook.api.persistence.entity.QBook.book;
-import static com.gomdolbook.api.persistence.entity.QBookUserCollection.bookUserCollection;
-import static com.gomdolbook.api.persistence.entity.QUser.user;
-import static com.gomdolbook.api.persistence.entity.QUserCollection.userCollection;
+import static com.gomdolbook.api.domain.models.book.QBook.book;
+import static com.gomdolbook.api.domain.models.bookCollection.QBookCollection.bookCollection;
+import static com.gomdolbook.api.domain.models.collection.QCollection.collection;
+import static com.gomdolbook.api.domain.models.user.QUser.user;
 
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverData;
 import com.gomdolbook.api.application.book.dto.BookListData;
-import com.gomdolbook.api.api.dto.book.QBookCollectionCoverDTO;
-import com.gomdolbook.api.api.dto.book.QBookListResponseDTO;
+import com.gomdolbook.api.application.book.dto.QBookCollectionCoverData;
+import com.gomdolbook.api.application.book.dto.QBookListData;
+import com.gomdolbook.api.domain.models.collection.QCollection;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
@@ -27,12 +28,12 @@ public class BookCollectionRepositoryImpl implements BookCollectionRepositoryCus
     public List<BookCollectionCoverData> getAllCollection(String email) {
 
         return queryFactory.select(
-            new QBookCollectionCoverDTO(userCollection.name, book.cover)
+            new QBookCollectionCoverData(collection.name, book.cover)
             )
-            .from(userCollection)
-            .leftJoin(bookUserCollection).on(userCollection.id.eq(bookUserCollection.userCollection.id))
-            .leftJoin(book).on(book.id.eq(bookUserCollection.book.id))
-            .where(userCollection.user.email.eq(email))
+            .from(collection)
+            .leftJoin(bookCollection).on(collection.id.eq(bookCollection.collection.id))
+            .leftJoin(book).on(book.id.eq(bookCollection.book.id))
+            .where(collection.user.email.eq(email))
             .fetch();
     }
 
@@ -40,29 +41,29 @@ public class BookCollectionRepositoryImpl implements BookCollectionRepositoryCus
     public List<BookListData> getCollection(String name, String email) {
 
         return queryFactory.select(
-                new QBookListResponseDTO(
+                new QBookListData(
                     book.cover,
                     book.title,
-                    book.isbn13,
+                    book.isbn,
                     book.readingLog.status
                 )
-            ).from(userCollection)
-            .leftJoin(bookUserCollection).on(userCollection.id.eq(bookUserCollection.userCollection.id))
-            .leftJoin(book).on(book.id.eq(bookUserCollection.book.id))
-            .where(userCollection.user.email.eq(email))
-            .where(userCollection.name.eq(name))
+            ).from(collection)
+            .leftJoin(bookCollection).on(collection.id.eq(bookCollection.collection.id))
+            .leftJoin(book).on(book.id.eq(bookCollection.book.id))
+            .where(collection.user.email.eq(email))
+            .where(collection.name.eq(name))
             .fetch();
     }
 
     @Override
     public Optional<BookCollection> find(String isbn, String name, String email) {
-        BookCollection collection = queryFactory.selectFrom(bookUserCollection)
-            .join(bookUserCollection.user, user)
-            .join(bookUserCollection.userCollection, userCollection)
-            .join(bookUserCollection.book, book)
-            .where(bookUserCollection.user.email.eq(email))
-            .where(bookUserCollection.userCollection.name.eq(name))
-            .where(bookUserCollection.book.isbn13.eq(isbn))
+        BookCollection collection = queryFactory.selectFrom(bookCollection)
+            .join(bookCollection.user, user)
+            .join(bookCollection.collection, QCollection.collection)
+            .join(bookCollection.book, book)
+            .where(bookCollection.user.email.eq(email))
+            .where(bookCollection.collection.name.eq(name))
+            .where(bookCollection.book.isbn.eq(isbn))
             .fetchOne();
 
         return Optional.ofNullable(collection);

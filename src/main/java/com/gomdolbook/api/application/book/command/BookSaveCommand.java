@@ -8,7 +8,7 @@ public record BookSaveCommand(
     @NotBlank String author,
     @NotBlank String pubDate,
     @NotBlank String description,
-    @NotBlank String isbn13,
+    @NotBlank String isbn,
     @NotBlank String cover,
     @NotBlank String categoryName,
     @NotBlank String publisher,

@@ -9,16 +9,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gomdolbook.api.application.book.command.ReadingLogUpdateCommand;
 import com.gomdolbook.api.application.book.dto.AladinResponseData;
 import com.gomdolbook.api.application.book.dto.AladinResponseData.Item;
 import com.gomdolbook.api.application.book.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.book.Book;
+import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.User.Role;
-import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
@@ -89,13 +90,12 @@ class BookControllerTest {
         userRepository.save(user);
         ReadingLog readingLog = ReadingLog.of(user, Status.READING);
         readingLog.setUser(user);
-        readingLogRepository.save(readingLog);
         Book book = Book.builder()
             .title("펠로폰네소스 전쟁사")
             .author("투퀴디데스")
             .pubDate("2011-06-30")
             .description("투퀴디세스가 집필한 전쟁사")
-            .isbn13("9788991290402")
+            .isbn("9788991290402")
             .cover("image")
             .categoryName("서양고대사")
             .publisher("도서출판 숲")
@@ -282,7 +282,7 @@ class BookControllerTest {
 
     @Test
     void updateReadingLog() throws Exception {
-        var saveRequest = new ReadingLogUpdateRequestDTO("9788991290402", "note1", "note1 saved");
+        var saveRequest = new ReadingLogUpdateCommand("9788991290402", "note1", "note1 saved");
 
         mockMvc.perform(post("/v1/readingLog/update")
                 .contentType(MediaType.APPLICATION_JSON)

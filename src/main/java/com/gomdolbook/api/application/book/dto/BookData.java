@@ -20,7 +20,7 @@ public record BookData(
             book.getAuthor(),
             book.getPubDate(),
             book.getDescription(),
-            book.getIsbn13(),
+            book.getIsbn(),
             book.getCover(),
             book.getCategoryName(),
             book.getPublisher()

@@ -63,7 +63,7 @@ public class BookApplicationService {
     @UserCheckAndSave
     @Transactional(readOnly = true)
     public BookAndReadingLogData getReadingLog(String isbn) {
-        return bookRepository.find(
+        return bookRepository.findByEmail(
                 securityService.getUserEmailFromSecurityContext(), isbn)
             .orElseThrow(() -> new BookNotFoundException(isbn));
     }  
@@ -78,7 +78,7 @@ public class BookApplicationService {
     @Cacheable(cacheNames = "bookByIsbnCache", key = "#isbn", unless = "#result == null")
     @Transactional(readOnly = true)
     public Optional<Book> find(String isbn) {
-        return bookRepository.find(isbn);
+        return bookRepository.findByIsbn(isbn);
     }
 
     public Mono<BookData> fetchItemFromAladin(String isbn13) {
@@ -142,7 +142,7 @@ public class BookApplicationService {
                     retrySignal -> log.info("[retry] {}", retrySignal.toString())));
     }
 
-    @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#command.isbn13())")
+    @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#command.isbn())")
     @UserCheckAndSave
     @Transactional
     public Book saveBook(BookSaveCommand command) {
@@ -177,14 +177,14 @@ public class BookApplicationService {
     @Cacheable(cacheNames = "libraryCache", keyGenerator = "customKeyGenerator", unless = "#result.isEmpty()")
     @Transactional
     public List<BookListData> getLibrary(String status) {
-        return bookRepository.find(validateAndConvertStatus(status),
+        return bookRepository.findByStatus(validateAndConvertStatus(status),
             securityService.getUserEmailFromSecurityContext());
     }
 
     @CacheEvict(cacheNames = "readingLogCache", key = "@securityService.getCacheKey(#command.isbn())")
     @Transactional
     public void changeReadingLog(ReadingLogUpdateCommand command) {
-        Book book = bookRepository.find(command.isbn())
+        Book book = bookRepository.findByIsbn(command.isbn())
             .orElseThrow(() -> new BookNotFoundException("Cannot find book: " + command.isbn()));
 
         ReadingLog readingLog = book.getReadingLog();
@@ -200,7 +200,7 @@ public class BookApplicationService {
     @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
     public void changeStatus(String isbn, String status) {
-        ReadingLog readingLog = readingLogRepository.find(isbn,
+        ReadingLog readingLog = readingLogRepository.findByEmail(isbn,
                 securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new BookNotFoundException("can't not find book: " + isbn));
 
@@ -210,7 +210,7 @@ public class BookApplicationService {
     @CacheEvict(cacheNames = "readingLogCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
     public void changeRating(int rating, String isbn) {
-        ReadingLog readingLog = readingLogRepository.find(isbn,
+        ReadingLog readingLog = readingLogRepository.findByEmail(isbn,
                 securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new BookNotFoundException("can't find book: " + isbn));
 

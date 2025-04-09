@@ -2,21 +2,21 @@ package com.gomdolbook.api.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.gomdolbook.api.application.book.BookApplicationService;
+import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverListData;
 import com.gomdolbook.api.application.book.dto.BookListData;
-import com.gomdolbook.api.application.book.dto.BookSaveRequestDTO;
+import com.gomdolbook.api.application.bookCollection.BookCollectionApplicationService;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.book.Book;
-import com.gomdolbook.api.domain.models.collection.Collection;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
-import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.bookCollection.BookCollectionRepository;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.collection.Collection;
 import com.gomdolbook.api.domain.models.collection.CollectionRepository;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.UserRepository;
-import com.gomdolbook.api.application.book.BookApplicationService;
-import com.gomdolbook.api.application.bookCollection.BookCollectionApplicationService;
 import com.gomdolbook.api.util.TestDataFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -123,8 +123,7 @@ class BookCollectionApplicationServiceTest {
         bookCollectionApplicationService.getCollection("컬렉션");
         Cache cache = cacheManager.getCache("collectionListCache");
         assertThat(cache.get("redkafe@daum.net")).isNotNull();
-        BookSaveRequestDTO requestDTO = getBookSaveRequest();
-
+        BookSaveCommand requestDTO = getBookSaveRequest();
         bookCollectionApplicationService.addBook(requestDTO, "컬렉션");
         bookCollectionApplicationService.getCollectionList();
         List<BookCollectionCoverListData> list = cache.get("redkafe@daum.net", List.class);
@@ -152,10 +151,10 @@ class BookCollectionApplicationServiceTest {
 
     @Test
     void testDuplicatedBookSave() {
-        BookSaveRequestDTO requestDTO = getBookSaveRequest();
+        BookSaveCommand requestDTO = getBookSaveRequest();
         bookCollectionApplicationService.addBook(requestDTO, "컬렉션");
 
-        BookSaveRequestDTO requestDTO2 = getBookSaveRequest();
+        BookSaveCommand requestDTO2 = getBookSaveRequest();
         bookCollectionApplicationService.addBook(requestDTO2, "컬렉션");
 
         List<BookListData> collection1 = bookCollectionApplicationService.getCollection("컬렉션");
@@ -172,18 +171,11 @@ class BookCollectionApplicationServiceTest {
         assertThat(c).isEmpty();
     }
 
-    private BookSaveRequestDTO getBookSaveRequest() {
-        return BookSaveRequestDTO.builder()
-            .title("소년이 온다")
-            .author("한강")
-            .pubDate("2014-05-19")
-            .description("노벨 문학상")
-            .isbn13("9788936434120")
-            .cover("image 한강")
-            .categoryName("노벨문학상")
-            .publisher("창비")
-            .status("READING")
-            .build();
+    private BookSaveCommand getBookSaveRequest() {
+        return new BookSaveCommand(
+            "소년이 온다", "한강", "2014-05-19", "노벨 문학상", "9788936434120", "image 한강", "노벨문학상", "창비",
+            "READING"
+        );
     }
 
     @Transactional

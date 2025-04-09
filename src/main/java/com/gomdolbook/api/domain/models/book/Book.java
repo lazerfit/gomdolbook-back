@@ -43,7 +43,7 @@ public class Book {
     private String description;
 
     @Column
-    private String isbn13;
+    private String isbn;
 
     @Column
     private String cover;
@@ -73,28 +73,28 @@ public class Book {
     }
 
     @Builder
-    private Book(String title, String author, String pubDate, String description, String isbn13,
+    private Book(String title, String author, String pubDate, String description, String isbn,
         String cover, String categoryName, String publisher) {
         this.title = title;
         this.author = author;
         this.pubDate = pubDate;
         this.description = description;
-        this.isbn13 = isbn13;
+        this.isbn = isbn;
         this.cover = cover;
         this.categoryName = categoryName;
         this.publisher = publisher;
     }
 
-    public static Book of(BookSaveCommand request) {
+    public static Book of(BookSaveCommand command) {
         return Book.builder()
-            .title(request.title())
-            .author(request.author())
-            .pubDate(request.pubDate())
-            .description(request.description())
-            .isbn13(request.isbn13())
-            .cover(request.cover())
-            .categoryName(request.categoryName())
-            .publisher(request.publisher())
+            .title(command.title())
+            .author(command.author())
+            .pubDate(command.pubDate())
+            .description(command.description())
+            .isbn(command.isbn())
+            .cover(command.cover())
+            .categoryName(command.categoryName())
+            .publisher(command.publisher())
             .build();
     }
 

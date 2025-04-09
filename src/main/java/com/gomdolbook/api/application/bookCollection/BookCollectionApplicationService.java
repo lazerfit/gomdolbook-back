@@ -1,25 +1,25 @@
 package com.gomdolbook.api.application.bookCollection;
 
+import com.gomdolbook.api.application.book.BookApplicationService;
+import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverData;
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverListData;
 import com.gomdolbook.api.application.book.dto.BookListData;
-import com.gomdolbook.api.application.book.command.BookSaveCommand;
-import com.gomdolbook.api.application.book.BookApplicationService;
 import com.gomdolbook.api.common.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.common.config.annotations.UserCheckAndSave;
+import com.gomdolbook.api.domain.models.book.Book;
+import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.bookCollection.BookCollection;
+import com.gomdolbook.api.domain.models.bookCollection.BookCollectionRepository;
+import com.gomdolbook.api.domain.models.collection.Collection;
+import com.gomdolbook.api.domain.models.collection.CollectionRepository;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.user.User;
+import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.domain.services.SecurityService;
 import com.gomdolbook.api.domain.shared.BookNotFoundException;
 import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
 import com.gomdolbook.api.domain.shared.UserValidationError;
-import com.gomdolbook.api.domain.models.book.Book;
-import com.gomdolbook.api.domain.models.user.User;
-import com.gomdolbook.api.domain.models.collection.Collection;
-import com.gomdolbook.api.domain.models.book.BookRepository;
-import com.gomdolbook.api.domain.models.bookCollection.BookCollectionRepository;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
-import com.gomdolbook.api.domain.models.collection.CollectionRepository;
-import com.gomdolbook.api.domain.models.user.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -99,7 +99,7 @@ public class BookCollectionApplicationService {
         User user = userRepository.find(email)
             .orElseThrow(() -> new UserValidationError("해당 유저를 찾을 수 없습니다."));
 
-        Book book = bookApplicationService.find(command.isbn13()).orElseGet(() -> bookApplicationService.saveBook(command));
+        Book book = bookApplicationService.find(command.isbn()).orElseGet(() -> bookApplicationService.saveBook(command));
         log.info(">>> book.id = {}", book.getId());
         boolean isDuplicate = bookCollectionRepository.existsBook(user, collection, book);
         if (!isDuplicate) {

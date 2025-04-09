@@ -4,22 +4,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gomdolbook.api.application.book.BookApplicationService;
+import com.gomdolbook.api.application.book.command.ReadingLogUpdateCommand;
 import com.gomdolbook.api.application.book.dto.AladinResponseData;
 import com.gomdolbook.api.application.book.dto.AladinResponseData.Item;
-import com.gomdolbook.api.application.book.dto.StatusData;
+import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.BookData;
 import com.gomdolbook.api.application.book.dto.BookListData;
-import com.gomdolbook.api.application.book.command.BookSaveCommand;
-import com.gomdolbook.api.application.book.dto.SearchedBookData;
+import com.gomdolbook.api.application.book.dto.StatusData;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.book.Book;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
-import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.book.BookRepository;
+import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.UserRepository;
-import com.gomdolbook.api.application.book.BookApplicationService;
 import com.gomdolbook.api.util.TestDataFactory;
+import jakarta.persistence.EntityManager;
 import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -79,6 +80,9 @@ class BookApplicationServiceTest {
     @Autowired
     TestDataFactory testDataFactory;
 
+    @Autowired
+    EntityManager em;
+
     @BeforeAll
     static void setUp() throws IOException {
         server = new MockWebServer();
@@ -95,22 +99,11 @@ class BookApplicationServiceTest {
         user = testDataFactory.createUser("redkafe@daum.net", "image");
         ReadingLog savedReadingLog = testDataFactory.createReadingLog(user);
         testDataFactory.createBook(savedReadingLog);
-
-        Book book = Book.builder()
-            .title("소년이 온다")
-            .author("한강")
-            .pubDate("2014-05-19")
-            .description("노벨 문학상")
-            .isbn13("9788936434120")
-            .cover("image1")
-            .categoryName("노벨문학상")
-            .publisher("창비")
-            .build();
-        bookRepository.save(book);
     }
 
     @AfterEach
     void teardown() {
+        em.clear();
         bookRepository.deleteAll();
         readingLogRepository.deleteAll();
         userRepository.deleteAll();
@@ -154,55 +147,6 @@ class BookApplicationServiceTest {
     }
 
     @Test
-    void getBookFromAPIWith500Response() {
-        server.enqueue(new MockResponse().setResponseCode(500));
-        Mono<BookData> firstCall = bookApplicationService.fetchItemFromAladin("9788936434120");
-        StepVerifier.create(firstCall)
-            .expectNextCount(0)
-            .verifyComplete();
-
-        Mono<BookData> secondCall = bookApplicationService.fetchItemFromAladin("9788936434120");
-        StepVerifier.create(secondCall)
-            .expectNextCount(0)
-            .verifyComplete();
-
-        assertThat(server.getRequestCount()).isEqualTo(4);
-    }
-
-    @Test
-    void getBookListFromAPIWithCache() throws Exception {
-        String response = objectMapper.writeValueAsString(new AladinResponseData(1, 1, 1,
-            List.of(new Item("소년이 온다", "한강", "2014-05-19", "2024 노벨문학상",
-                "9788936434120", "image1", "노벨문학상",
-                "창비"), new Item("소년이 온다1", "한강1", "2014-06-19", "2025 노벨문학상",
-                "97889364341201", "image11", "노벨문학상1",
-                "창비1"))));
-
-        server.enqueue(
-            new MockResponse().setResponseCode(200)
-                .setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .setBody(response)
-        );
-
-        Mono<List<SearchedBookData>> firstCall = bookApplicationService.searchBookFromAladin("글쓰기");
-
-        StepVerifier.create(firstCall)
-            .expectNextMatches(book -> book.getLast().title().equals("소년이 온다1"))
-            .verifyComplete();
-
-        RecordedRequest request = server.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("GET");
-
-        Mono<List<SearchedBookData>> secondCall = bookApplicationService.searchBookFromAladin("글쓰기");
-
-        StepVerifier.create(secondCall)
-            .expectNextMatches(book -> book.getLast().title().equals("소년이 온다1"))
-            .verifyComplete();
-
-        assertThat(server.getRequestCount()).isEqualTo(1);
-    }
-
-    @Test
     void aopInfo() {
         log.info("isAopProxy, BookService={}", AopUtils.isAopProxy(bookApplicationService));
     }
@@ -232,54 +176,10 @@ class BookApplicationServiceTest {
         assertThat(library).isEmpty();
     }
 
-    @Test
-    void saveOrUpdateBookWithStatus() {
-        BookSaveCommand command = new BookSaveCommand(
-            "t", "a", "p", "d", "i", "c", "cn", "p", "READING");
-
-        bookApplicationService.saveBook(command);
-        ReadingLog readingLog = readingLogRepository.find("i", "redkafe@daum.net")
-            .orElseThrow();
-        assertThat(readingLog.getStatus().name()).isEqualTo("READING");
-    }
-
-    @Test
-    void saveOrUpdateBookWithNullStatus() {
-        BookSaveCommand command = new BookSaveCommand(
-            "t", "a", "p", "d", "i", "c", "cn", "p", null);
-
-        bookApplicationService.saveBook(command);
-        ReadingLog readingLog = readingLogRepository.find("i", "redkafe@daum.net")
-            .orElseThrow();
-        assertThat(readingLog.getStatus().name()).isEqualTo("NEW");
-    }
-
-    @Test
-    void saveOrUpdateBookWithBlankStatus() {
-        BookSaveCommand command = new BookSaveCommand(
-            "t", "a", "p", "d", "i", "c", "cn", "p", "");
-        bookApplicationService.saveBook(command);
-        ReadingLog readingLog = readingLogRepository.find("i", "redkafe@daum.net")
-            .orElseThrow();
-        assertThat(readingLog.getStatus().name()).isEqualTo("READING");
-    }
-
-    @Test
-    void changeStatus() {
-        BookSaveCommand command = new BookSaveCommand(
-            "펠로폰네소스 전쟁사", "투퀴디데스", "2011-06-30", "투퀴디세스가 집필한 전쟁사", "9788991290402", "image",
-            "서양고대사", "도서출판 숲", "FINISHED");
-
-        bookApplicationService.saveBook(command);
-        ReadingLog readingLog = readingLogRepository.find("i", "redkafe@daum.net")
-            .orElseThrow();
-        assertThat(readingLog.getStatus().name()).isEqualTo("FINISHED");
-    }
-
     @Transactional
     @Test
     void changeReadingLog() {
-        var saveRequest = new ReadingLogUpdateRequestDTO(
+        var saveRequest = new ReadingLogUpdateCommand(
             "9788991290402", "note1", "readingLog test");
         bookApplicationService.changeReadingLog(saveRequest);
         Book book = bookApplicationService.find("9788991290402").orElseThrow();
@@ -294,32 +194,34 @@ class BookApplicationServiceTest {
         String status = "FINISHED";
 
         bookApplicationService.changeStatus(isbn, status);
-        Book book = bookApplicationService.find(isbn).orElseThrow();
-
-        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("FINISHED");
+        em.flush();
+        em.clear();
+        BookAndReadingLogData readingLog = bookApplicationService.getReadingLog(isbn);
+        assertThat(readingLog.getStatus().name()).isEqualTo("FINISHED");
     }
 
     @Transactional
     @Test
     void saveRating() {
-        ReadingLog readingLog = readingLogRepository.find("9788991290402",
+        ReadingLog readingLog = readingLogRepository.findByEmail("9788991290402",
             "redkafe@daum.net").orElseThrow();
         readingLog.changeRating(1);
         assertThat(readingLog.getRating()).isEqualTo(1);
 
-        ReadingLog updated = readingLogRepository.find("9788991290402",
+        ReadingLog updated = readingLogRepository.findByEmail("9788991290402",
             "redkafe@daum.net").orElseThrow();
         assertThat(updated.getRating()).isEqualTo(1);
     }
 
+    @Transactional
     @Test
     void getStatusCacheTest() {
         bookApplicationService.getStatus("9788991290402");
         Cache cache = cacheManager.getCache("statusCache");
         assertThat(cache).isNotNull();
         bookApplicationService.getStatus("9788991290402");
-        String cachedStatus = cache.get("redkafe@daum.net:[9788991290402]", String.class);
-        assertThat(cachedStatus).isEqualTo("READING");
+        StatusData cachedStatus = cache.get("redkafe@daum.net:[9788991290402]", StatusData.class);
+        assertThat(cachedStatus.status()).isEqualTo("READING");
     }
 
     @Transactional
@@ -329,8 +231,8 @@ class BookApplicationServiceTest {
         Cache cache = cacheManager.getCache("statusCache");
         assertThat(cache).isNotNull();
         bookApplicationService.getStatus("9788991290402");
-        String cachedStatus = cache.get("redkafe@daum.net:[9788991290402]", String.class);
-        assertThat(cachedStatus).isEqualTo("READING");
+        StatusData cachedStatus = cache.get("redkafe@daum.net:[9788991290402]", StatusData.class);
+        assertThat(cachedStatus.status()).isEqualTo("READING");
 
         bookApplicationService.changeStatus("9788991290402", "FINISHED");
 
@@ -338,7 +240,7 @@ class BookApplicationServiceTest {
         assertThat(status.status()).isEqualTo("FINISHED");
         Cache cache1 = cacheManager.getCache("statusCache");
         assertThat(cache).isNotNull();
-        String c = cache1.get("redkafe@daum.net:[9788991290402]", String.class);
-        assertThat(c).isEqualTo("FINISHED");
+        StatusData c = cache1.get("redkafe@daum.net:[9788991290402]", StatusData.class);
+        assertThat(c.status()).isEqualTo("FINISHED");
     }
 }

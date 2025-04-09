@@ -9,18 +9,12 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(indexes = {
-    @Index(name = "idx_book_user_coll_book",
-    columnList = "user_id, user_collection_id, book_id")
-})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity

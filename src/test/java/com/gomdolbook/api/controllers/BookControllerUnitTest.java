@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gomdolbook.api.application.book.command.ReadingLogUpdateCommand;
 import com.gomdolbook.api.application.book.web.BookController;
 import com.gomdolbook.api.application.book.dto.StatusData;
 import com.gomdolbook.api.application.book.BookApplicationService;
@@ -60,7 +61,7 @@ class BookControllerUnitTest {
             .author("투퀴디데스")
             .pubDate("2011-06-30")
             .description("투퀴디세스가 집필한 전쟁사")
-            .isbn13("9788991290402")
+            .isbn("9788991290402")
             .cover("image")
             .categoryName("서양고대사")
             .publisher("도서출판 숲")
@@ -142,7 +143,7 @@ class BookControllerUnitTest {
 
     @Test
     void updateReadingLog() throws Exception {
-        var saveRequest = new ReadingLogUpdateRequestDTO("9788991290402", "note1", "note1 saved");
+        var saveRequest = new ReadingLogUpdateCommand("9788991290402", "note1", "note1 saved");
 
         mockMvc.perform(post("/v1/readingLog/update")
                 .with(csrf())

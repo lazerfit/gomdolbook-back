@@ -1,12 +1,12 @@
 package com.gomdolbook.api.domain.models.book;
 
-import static com.gomdolbook.api.persistence.entity.QBook.book;
-import static com.gomdolbook.api.persistence.entity.QReadingLog.readingLog;
+import static com.gomdolbook.api.domain.models.book.QBook.book;
+import static com.gomdolbook.api.domain.models.readingLog.QReadingLog.readingLog;
 
 import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.BookListData;
-import com.gomdolbook.api.api.dto.book.QBookAndReadingLogDTO;
-import com.gomdolbook.api.api.dto.book.QBookListResponseDTO;
+import com.gomdolbook.api.application.book.dto.QBookAndReadingLogData;
+import com.gomdolbook.api.application.book.dto.QBookListData;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -16,17 +16,17 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class BookRepositoryImpl implements BookRepositoryCustom{
+public class BookRepositoryCustomImpl implements BookRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Optional<BookAndReadingLogData> find(String email, String isbn) {
+    public Optional<BookAndReadingLogData> findByEmail(String email, String isbn) {
 
         BookAndReadingLogData dto = queryFactory.select(
-                new QBookAndReadingLogDTO(book)).from(book)
+                new QBookAndReadingLogData(book)).from(book)
             .join(book.readingLog, readingLog).fetchJoin()
-            .where(book.isbn13.eq(isbn))
+            .where(book.isbn.eq(isbn))
             .where(book.readingLog.user.email.eq(email))
             .fetchFirst();
 
@@ -34,9 +34,9 @@ public class BookRepositoryImpl implements BookRepositoryCustom{
     }
 
     @Override
-    public List<BookListData> find(Status status, String email) {
+    public List<BookListData> findByStatus(Status status, String email) {
         return queryFactory.select(
-                new QBookListResponseDTO(book.cover, book.title, book.isbn13, book.readingLog.status)
+                new QBookListData(book.cover, book.title, book.isbn, book.readingLog.status)
             ).from(book)
             .join(book.readingLog,readingLog)
             .where(book.readingLog.user.email.eq(email))
@@ -50,7 +50,7 @@ public class BookRepositoryImpl implements BookRepositoryCustom{
             .from(book)
             .join(book.readingLog, readingLog)
             .where(book.readingLog.user.email.eq(email))
-            .where(book.isbn13.eq(isbn))
+            .where(book.isbn.eq(isbn))
             .fetchOne());
     }
 }

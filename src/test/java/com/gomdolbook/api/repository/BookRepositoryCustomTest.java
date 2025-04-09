@@ -7,11 +7,11 @@ import com.gomdolbook.api.application.book.dto.BookListData;
 import com.gomdolbook.api.application.book.dto.BookSaveRequestDTO;
 import com.gomdolbook.api.common.config.QueryDslConfig;
 import com.gomdolbook.api.domain.models.book.Book;
+import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
-import com.gomdolbook.api.domain.models.user.User;
-import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
 import java.util.List;
@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Import({QueryDslConfig.class, TestDataFactory.class})
 @DataJpaTest
-class BookRepositoryTest {
+class BookRepositoryCustomTest {
 
     static Book mockBook;
     static User user;
@@ -45,8 +45,8 @@ class BookRepositoryTest {
     @BeforeEach
     void setUp() {
         user = testDataFactory.createUser("user@gmail.com", "image");
-        ReadingLog savedReadingLog = testDataFactory.createReadingLog(user);
-        mockBook = testDataFactory.createBook(savedReadingLog);
+        ReadingLog readingLog = testDataFactory.createReadingLog(user);
+        mockBook = testDataFactory.createBook(readingLog);
     }
 
     @AfterEach
@@ -58,7 +58,7 @@ class BookRepositoryTest {
 
     @Test
     void saveBook() {
-        Book saved = bookRepository.find("9788991290402").orElseThrow();
+        Book saved = bookRepository.findByIsbn("9788991290402").orElseThrow();
 
         assertThat(saved.getAuthor()).isEqualTo("투퀴디데스");
         assertThat(saved.getReadingLog().getNote1()).isEqualTo("");
@@ -68,7 +68,7 @@ class BookRepositoryTest {
     @Test
     void updateStatus() {
         BookSaveRequestDTO request = testDataFactory.getBookSaveRequestDTO("FINISHED");
-        Book book = bookRepository.find(request.isbn13()).orElseThrow();
+        Book book = bookRepository.findByIsbn(request.isbn13()).orElseThrow();
 
         if (!book.getReadingLog().getStatus().name().equals(request.status())) {
             book.getReadingLog().changeStatus(Status.FINISHED);
@@ -80,7 +80,7 @@ class BookRepositoryTest {
     @Transactional
     @Test
     void getReadingLog() {
-        BookAndReadingLogData savedBook = bookRepository.find(
+        BookAndReadingLogData savedBook = bookRepository.findByEmail(
             "user@gmail.com", "9788991290402").orElseThrow();
 
         assertThat(savedBook.getAuthor()).isEqualTo("투퀴디데스");
@@ -89,7 +89,7 @@ class BookRepositoryTest {
 
     @Test
     void getLibrary() {
-        List<BookListData> dto = bookRepository.find(
+        List<BookListData> dto = bookRepository.findByStatus(
             Status.READING, "user@gmail.com");
         assertThat(dto).hasSize(1);
         assertThat(dto.getFirst().title()).isEqualTo("펠로폰네소스 전쟁사");
@@ -97,7 +97,7 @@ class BookRepositoryTest {
 
     @Test
     void getBookResponse() {
-        List<BookListData> byReadingStatus = bookRepository.find(
+        List<BookListData> byReadingStatus = bookRepository.findByStatus(
             Status.READING, "user@gmail.com");
 
         assertThat(byReadingStatus).hasSize(1);

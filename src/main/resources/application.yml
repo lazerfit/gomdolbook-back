@@ -11,7 +11,6 @@ spring:
     driver-class-name: org.h2.Driver
   jpa:
     show-sql: true
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       default_batch_fetch_size: 20
       format_sql: true
