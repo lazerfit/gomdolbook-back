@@ -1,5 +1,6 @@
 package com.gomdolbook.api.domain.models.bookCollection;
 
+import com.gomdolbook.api.common.config.annotations.DomainRepository;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.collection.Collection;
 import com.gomdolbook.api.domain.models.user.User;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+@DomainRepository
 public interface BookCollectionRepository extends JpaRepository<BookCollection, Long>,
     BookCollectionRepositoryCustom {
 

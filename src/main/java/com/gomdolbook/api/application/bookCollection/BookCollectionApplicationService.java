@@ -5,6 +5,7 @@ import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverData;
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverListData;
 import com.gomdolbook.api.application.book.dto.BookListData;
+import com.gomdolbook.api.common.config.annotations.DomainService;
 import com.gomdolbook.api.common.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.common.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.domain.models.book.Book;
@@ -31,6 +32,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@DomainService
 @Slf4j
 @PreAuthorizeWithContainsUser
 @RequiredArgsConstructor
