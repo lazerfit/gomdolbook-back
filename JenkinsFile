@@ -26,14 +26,14 @@ pipeline {
                     channel: "#playground",
                     color: "good",
                     message: "✅ *gomdolbook 배포 성공!* (<${env.BUILD_URL}|Build #${env.BUILD_NUMBER}>)"
-                    )
+                  )
               }
               catch (err) {
                 slackSend(
                   channel: "#playground",
                   color: "danger",
                   message: "❌ *gomdolbook 배포 실패!* (<${env.BUILD_URL}|Build #${env.BUILD_NUMBER}>)"
-                  )
+                )
                 throw err
               }
             }
