@@ -17,10 +17,6 @@ spring:
       ddl-auto: create
       naming:
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
-    properties:
-      javax.persistence.schema-generation.scripts.action: create
-      javax.persistence.schema-generation.scripts.create-target: schema.sql
-      javax.persistence.schema-generation.create-source: metadata
   sql:
     init:
       mode: never
