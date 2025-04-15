@@ -3,7 +3,7 @@ package com.gomdolbook.api.common.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -26,6 +26,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(request -> request
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/**").hasAnyAuthority("ROLE_user")
                 .anyRequest().permitAll())
             .sessionManagement(
@@ -52,7 +53,7 @@ public class WebSecurityConfig {
                 registry.addMapping("/**")
                     .allowedOrigins("https://www.gomdolbook.kr")
                     .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                    .allowedHeaders(HttpHeaders.CONTENT_TYPE, HttpHeaders.AUTHORIZATION)
+                    .allowedHeaders("*")
                     .allowCredentials(true);
             }
         };
