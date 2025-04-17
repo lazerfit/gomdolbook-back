@@ -165,7 +165,7 @@ class BookControllerTest {
     void getReadingLog() throws Exception {
         mockMvc.perform(get("/v1/readingLog")
                 .contentType(MediaType.APPLICATION_JSON)
-                .param("isbn13", "9788991290402"))
+                .param("isbn", "9788991290402"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
             .andExpect(jsonPath("$.data.author").value("투퀴디데스"))
@@ -242,7 +242,7 @@ class BookControllerTest {
     @Test
     void BookNotFound() throws Exception {
         mockMvc.perform(get("/v1/readingLog")
-                .param("isbn13","1234"))
+                .param("isbn","1234"))
             .andExpect(status().is4xxClientError())
             .andExpect(jsonPath("$.errors").value("Can't find Book: 1234"))
             .andDo(print());
@@ -287,7 +287,7 @@ class BookControllerTest {
     @Test
     void saveRate() throws Exception {
         mockMvc.perform(post("/v1/readingLog/rating/update")
-                .param("isbn13", "9788991290402")
+                .param("isbn", "9788991290402")
                 .param("star", "5")
                 .with(csrf()))
             .andExpect(status().isOk())
