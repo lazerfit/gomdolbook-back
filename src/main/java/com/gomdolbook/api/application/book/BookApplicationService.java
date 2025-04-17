@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -81,11 +82,11 @@ public class BookApplicationService {
         return bookRepository.findByIsbn(isbn);
     }
 
-    public Mono<BookData> fetchItemFromAladin(String isbn13) {
-        return getAladinData(isbn13,"ItemLookUp.aspx", uriBuilder -> uriBuilder
+    public Mono<BookData> fetchItemFromAladin(String isbn) {
+        return getAladinData(isbn,"ItemLookUp.aspx", uriBuilder -> uriBuilder
             .queryParam("ttbkey", ttbkey)
             .queryParam("ItemIdType", "ISBN13")
-            .queryParam("ItemId", isbn13)
+            .queryParam("ItemId", isbn)
             .queryParam("Cover", "Big")
             .queryParam("Output", "JS")
             .queryParam("Version", "20131101").build())
@@ -142,7 +143,10 @@ public class BookApplicationService {
                     retrySignal -> log.info("[retry] {}", retrySignal.toString())));
     }
 
-    @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#command.isbn())")
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#command.isbn())"),
+        @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getUserEmailFromSecurityContext()+':'+'['+#command.status()+']'")
+    })
     @UserCheckAndSave
     @Transactional
     public Book saveBook(BookSaveCommand command) {

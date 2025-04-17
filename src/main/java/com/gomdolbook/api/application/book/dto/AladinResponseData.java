@@ -15,7 +15,5 @@ public record AladinResponseData(int totalResults,
                        String cover,
                        String categoryName,
                        String publisher) {
-        
     }
-
 }

@@ -8,7 +8,7 @@ public record BookData(
     String author,
     String pubDate,
     String description,
-    String isbn13,
+    String isbn,
     String cover,
     String categoryName,
     String publisher
