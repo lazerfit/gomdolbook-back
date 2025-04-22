@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 public record ReadingLogUpdateCommand(
     @NotNull String isbn,
     @NotNull String note,
-    @NotBlank String value
+    @NotBlank String text
 ) implements Command {
 
 }

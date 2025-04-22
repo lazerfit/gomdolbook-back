@@ -195,9 +195,9 @@ public class BookApplicationService {
         ReadingLog readingLog = book.getReadingLog();
 
         switch (command.note()) {
-            case "note1"-> readingLog.changeNote1(command.value());
-            case "note2" -> readingLog.changeNote2(command.value());
-            case "note3"-> readingLog.changeNote3(command.value());
+            case "note1"-> readingLog.changeNote1(command.text());
+            case "note2" -> readingLog.changeNote2(command.text());
+            case "note3"-> readingLog.changeNote3(command.text());
             default -> throw new IllegalArgumentException("Invalid note: " + command.note());
         }
     }
