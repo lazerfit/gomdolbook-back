@@ -13,6 +13,9 @@ import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.User.Role;
 import com.gomdolbook.api.domain.models.user.UserRepository;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,7 +76,13 @@ public class TestDataFactory {
             .publisher("도서출판 숲")
             .build();
         book.setReadingLog(readingLog);
+        book.changeStartedAt(generateDateTime());
         return bookRepository.save(book);
+    }
+
+    private LocalDateTime generateDateTime() {
+        LocalDateTime localDateTime = LocalDateTime.of(2025, 1, 1, 0, 0, 0);
+        return ZonedDateTime.of(localDateTime,ZoneId.of("Asia/Seoul")).toLocalDateTime();
     }
 
     public BookSaveCommand getBookSaveRequestDTO(String status) {

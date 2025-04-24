@@ -12,6 +12,7 @@ import com.gomdolbook.api.application.book.command.StatusUpdateHandler;
 import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.BookData;
 import com.gomdolbook.api.application.book.dto.BookListData;
+import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
 import com.gomdolbook.api.application.book.dto.SearchedBookData;
 import com.gomdolbook.api.application.book.dto.StatusData;
 import com.gomdolbook.api.application.shared.ApiResponse;
@@ -104,6 +105,18 @@ public class BookController {
         }
         ApiResponse<List<BookListData>> responseDTO = new ApiResponse<>(
             libraries);
+        return new ResponseEntity<>(responseDTO,HttpStatus.OK);
+    }
+
+    @GetMapping("/v1/book/calendar/finished")
+    public ResponseEntity<ApiResponse<List<FinishedBookCalendarData>>> getFinishedBookCalendar() {
+        List<FinishedBookCalendarData> finishedBookCalendar = bookApplicationService.getFinishedBookCalendarData();
+        log.info("finishedBookCalendar called");
+        if (finishedBookCalendar.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        ApiResponse<List<FinishedBookCalendarData>> responseDTO = new ApiResponse<>(
+            finishedBookCalendar);
         return new ResponseEntity<>(responseDTO,HttpStatus.OK);
     }
 }

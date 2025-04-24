@@ -7,6 +7,7 @@ import com.gomdolbook.api.application.book.dto.AladinResponseData;
 import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.BookData;
 import com.gomdolbook.api.application.book.dto.BookListData;
+import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
 import com.gomdolbook.api.application.book.dto.SearchedBookData;
 import com.gomdolbook.api.application.book.dto.StatusData;
 import com.gomdolbook.api.application.user.UserApplicationService;
@@ -23,6 +24,8 @@ import com.gomdolbook.api.domain.shared.BookNotFoundException;
 import com.gomdolbook.api.domain.shared.UserValidationError;
 import java.net.URI;
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -153,6 +156,13 @@ public class BookApplicationService {
         User user = userApplicationService.find(securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
         Book book = createBookWithReadingLog(command, user);
+        if (command.status().equals("READING") ) {
+            ZonedDateTime kst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+            book.changeStartedAt(kst.toLocalDateTime());
+        } else if (command.status().equals("FINISHED")) {
+            ZonedDateTime kst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+            book.changeFinishedAt(kst.toLocalDateTime());
+        }
         return bookRepository.save(book);
     }
 
@@ -202,6 +212,10 @@ public class BookApplicationService {
         }
     }
 
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#isbn)"),
+        @CacheEvict(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()", condition = "#status.equals('FINISHED')")
+    })
     @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
     public void changeStatus(String isbn, String status) {
@@ -220,5 +234,11 @@ public class BookApplicationService {
             .orElseThrow(() -> new BookNotFoundException("can't find book: " + isbn));
 
         readingLog.changeRating(rating);
+    }
+
+    @Cacheable(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()", unless = "#result.isEmpty()")
+    @Transactional
+    public List<FinishedBookCalendarData> getFinishedBookCalendarData() {
+        return bookRepository.getFinishedBookCalendarData(securityService.getUserEmailFromSecurityContext());
     }
 }

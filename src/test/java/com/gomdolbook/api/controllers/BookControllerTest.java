@@ -24,6 +24,7 @@ import com.gomdolbook.api.domain.models.user.User.Role;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -165,7 +166,7 @@ class BookControllerTest {
     void getReadingLog() throws Exception {
         mockMvc.perform(get("/v1/readingLog")
                 .contentType(MediaType.APPLICATION_JSON)
-                .param("isbn13", "9788991290402"))
+                .param("isbn", "9788991290402"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
             .andExpect(jsonPath("$.data.author").value("투퀴디데스"))
@@ -242,7 +243,7 @@ class BookControllerTest {
     @Test
     void BookNotFound() throws Exception {
         mockMvc.perform(get("/v1/readingLog")
-                .param("isbn13","1234"))
+                .param("isbn","1234"))
             .andExpect(status().is4xxClientError())
             .andExpect(jsonPath("$.errors").value("Can't find Book: 1234"))
             .andDo(print());
@@ -287,10 +288,34 @@ class BookControllerTest {
     @Test
     void saveRate() throws Exception {
         mockMvc.perform(post("/v1/readingLog/rating/update")
-                .param("isbn13", "9788991290402")
+                .param("isbn", "9788991290402")
                 .param("star", "5")
                 .with(csrf()))
             .andExpect(status().isOk())
+            .andDo(print());
+    }
+
+    @Test
+    void getFinishedBookReturnEmptyList() throws Exception {
+        mockMvc.perform(get("/v1/book/calendar/finished"))
+            .andExpect(status().isNoContent())
+            .andDo(print());
+    }
+
+    @Test
+    void saveBookAndGetFinishedBook() throws Exception {
+        BookSaveCommand bookSaveCommand = new BookSaveCommand("t", "author", "2024-01-01",
+            "description",
+            "9788936434120", "cover", "categoryName", "publisher", "FINISHED");
+        mockMvc.perform(post("/v1/book/save")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bookSaveCommand)))
+            .andExpect(status().isNoContent())
+            .andDo(print());
+
+        mockMvc.perform(get("/v1/book/calendar/finished"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].finishedAt").value(LocalDate.now().toString()))
             .andDo(print());
     }
 }
