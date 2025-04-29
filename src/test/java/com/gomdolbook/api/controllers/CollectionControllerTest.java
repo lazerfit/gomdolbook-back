@@ -132,7 +132,7 @@ class CollectionControllerTest {
     @Test
     void removeBook() throws Exception{
         mockMvc.perform(delete("/v1/collection/{name}/book/remove", "컬렉션")
-                .param("isbn13", "9788991290402"))
+                .param("isbn", "9788991290402"))
             .andExpect(status().isOk())
             .andDo(print());
     }

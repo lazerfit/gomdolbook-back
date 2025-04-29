@@ -59,7 +59,7 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
     @Override
     public List<FinishedBookCalendarData> getFinishedBookCalendarData(String email) {
         return queryFactory.select(
-                new QFinishedBookCalendarData(book.isbn, book.cover, book.readingLog.rating,book.finishedAt)
+                new QFinishedBookCalendarData(book.title,book.isbn, book.cover, book.readingLog.rating,book.finishedAt)
             ).from(book)
             .where(book.readingLog.user.email.eq(email))
             .where(book.readingLog.status.eq(Status.FINISHED))

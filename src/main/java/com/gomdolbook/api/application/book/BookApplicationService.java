@@ -148,7 +148,8 @@ public class BookApplicationService {
 
     @Caching(evict = {
         @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#command.isbn())"),
-        @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey(#command.status())")
+        @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey(#command.status())"),
+        @CacheEvict(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()")
     })
     @UserCheckAndSave
     @Transactional

@@ -111,7 +111,6 @@ public class BookController {
     @GetMapping("/v1/book/calendar/finished")
     public ResponseEntity<ApiResponse<List<FinishedBookCalendarData>>> getFinishedBookCalendar() {
         List<FinishedBookCalendarData> finishedBookCalendar = bookApplicationService.getFinishedBookCalendarData();
-        log.info("finishedBookCalendar called");
         if (finishedBookCalendar.isEmpty()) {
             return ResponseEntity.noContent().build();
         }

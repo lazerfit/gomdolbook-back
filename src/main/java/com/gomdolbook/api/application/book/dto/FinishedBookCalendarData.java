@@ -8,14 +8,16 @@ import lombok.Getter;
 @Getter
 public class FinishedBookCalendarData {
 
+    private String title;
     private String isbn;
     private String cover;
     private Integer rating;
     private LocalDate finishedAt;
 
     @QueryProjection
-    public FinishedBookCalendarData(String isbn, String cover, Integer rating,
+    public FinishedBookCalendarData(String title, String isbn, String cover, Integer rating,
         LocalDateTime finishedAt) {
+        this.title = title;
         this.isbn = isbn;
         this.cover = cover;
         this.rating = rating;
