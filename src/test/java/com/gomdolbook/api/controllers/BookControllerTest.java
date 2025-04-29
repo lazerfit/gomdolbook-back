@@ -24,6 +24,7 @@ import com.gomdolbook.api.domain.models.user.User.Role;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -291,6 +292,30 @@ class BookControllerTest {
                 .param("star", "5")
                 .with(csrf()))
             .andExpect(status().isOk())
+            .andDo(print());
+    }
+
+    @Test
+    void getFinishedBookReturnEmptyList() throws Exception {
+        mockMvc.perform(get("/v1/book/calendar/finished"))
+            .andExpect(status().isNoContent())
+            .andDo(print());
+    }
+
+    @Test
+    void saveBookAndGetFinishedBook() throws Exception {
+        BookSaveCommand bookSaveCommand = new BookSaveCommand("t", "author", "2024-01-01",
+            "description",
+            "9788936434120", "cover", "categoryName", "publisher", "FINISHED");
+        mockMvc.perform(post("/v1/book/save")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(bookSaveCommand)))
+            .andExpect(status().isNoContent())
+            .andDo(print());
+
+        mockMvc.perform(get("/v1/book/calendar/finished"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data[0].finishedAt").value(LocalDate.now().toString()))
             .andDo(print());
     }
 }

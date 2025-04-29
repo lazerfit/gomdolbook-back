@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -53,6 +54,12 @@ public class Book {
 
     @Column
     private String publisher;
+
+    @Column
+    private LocalDateTime startedAt;
+
+    @Column
+    private LocalDateTime finishedAt;
 
     @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     @JoinColumn(name = "READINGLOG_ID")
@@ -96,6 +103,14 @@ public class Book {
             .categoryName(command.categoryName())
             .publisher(command.publisher())
             .build();
+    }
+
+    public void changeStartedAt(LocalDateTime startedAt) {
+        this.startedAt = startedAt;
+    }
+
+    public void changeFinishedAt(LocalDateTime finishedAt) {
+        this.finishedAt = finishedAt;
     }
 
 }

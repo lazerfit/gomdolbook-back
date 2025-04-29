@@ -45,7 +45,7 @@ public class CacheConfig {
     @Bean
     public CacheManager cacheManager(Caffeine<Object, Object> caffeine) {
         var caffeineCacheManager = new CaffeineCacheManager("readingLogCache", "statusCache",
-            "bookByIsbnCache", "libraryCache", "collectionListCache", "collectionCache");
+            "bookByIsbnCache", "libraryCache", "collectionListCache", "collectionCache" ,"finishedBookCalendarData");
         caffeineCacheManager.setCaffeine(caffeine);
         return caffeineCacheManager;
     }

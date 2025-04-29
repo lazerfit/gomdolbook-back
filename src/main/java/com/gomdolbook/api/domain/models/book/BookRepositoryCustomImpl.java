@@ -5,8 +5,10 @@ import static com.gomdolbook.api.domain.models.readingLog.QReadingLog.readingLog
 
 import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.BookListData;
+import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
 import com.gomdolbook.api.application.book.dto.QBookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.QBookListData;
+import com.gomdolbook.api.application.book.dto.QFinishedBookCalendarData;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -52,5 +54,15 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
             .where(book.readingLog.user.email.eq(email))
             .where(book.isbn.eq(isbn))
             .fetchOne());
+    }
+
+    @Override
+    public List<FinishedBookCalendarData> getFinishedBookCalendarData(String email) {
+        return queryFactory.select(
+                new QFinishedBookCalendarData(book.title,book.isbn, book.cover, book.readingLog.rating,book.finishedAt)
+            ).from(book)
+            .where(book.readingLog.user.email.eq(email))
+            .where(book.readingLog.status.eq(Status.FINISHED))
+            .fetch();
     }
 }
