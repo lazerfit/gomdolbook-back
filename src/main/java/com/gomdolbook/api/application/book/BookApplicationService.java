@@ -194,7 +194,6 @@ public class BookApplicationService {
     @Cacheable(cacheNames = "libraryCache", keyGenerator = "customKeyGenerator", unless = "#result.isEmpty()")
     @Transactional
     public List<BookListData> getLibrary(String status) {
-        log.info("getLibrary: {}", status);
         return bookRepository.findByStatus(validateAndConvertStatus(status),
             securityService.getUserEmailFromSecurityContext());
     }
