@@ -1,6 +1,7 @@
 # Gomdolbook Back-end (곰돌북 백엔드)
 
-Gomdolbook은 사용자들이 자신의 독서 기록을 효율적으로 관리하고, 책 컬렉션을 만들며, 알라딘 API를 통해 다양한 도서 정보를 탐색할 수 있도록 돕는 웹 애플리케이션의 백엔드 시스템입니다. Spring Boot를 기반으로 구축되었으며, RESTful API를 통해 프론트엔드와 통신합니다.
+Gomdolbook은 사용자들이 자신의 독서 기록을 효율적으로 관리하고, 책 컬렉션을 만들며, 알라딘 API를 통해 다양한 도서 정보를 탐색할 수 있도록 돕는 웹 애플리케이션의 백엔드 시스템입니다. Spring Boot를 기반으로 구축되었으며, RESTful API를 통해 프론트엔드와 통신합니다.   
+[Gitbook 바로가기](https://sgs-organization-3.gitbook.io/gomdolbook-api/)
 
 ## 주요 기능
 
