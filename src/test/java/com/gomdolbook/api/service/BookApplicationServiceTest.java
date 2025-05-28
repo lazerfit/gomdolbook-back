@@ -1,6 +1,7 @@
 package com.gomdolbook.api.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +18,8 @@ import com.gomdolbook.api.application.book.dto.StatusData;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
+import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
+import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
 import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
@@ -52,6 +55,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -71,6 +75,9 @@ class BookApplicationServiceTest {
 
     @Autowired
     BookRepository bookRepository;
+
+    @Autowired
+    BookMetaRepository bookMetaRepository;
 
     @Autowired
     ReadingLogRepository readingLogRepository;
@@ -357,5 +364,83 @@ class BookApplicationServiceTest {
         bookRepository.save(book);
 
         return kst;
+    }
+
+    @Transactional
+    @Test
+    void registerBookWithMeta_createsBookAndMetaAndReadingLog() {
+        BookSaveCommand command = new BookSaveCommand(
+            "테스트책", "저자", "2025-01-01", "설명",
+            "1234567890123", "cover", "카테고리", "출판사", "READING"
+        );
+
+        Book book = bookApplicationService.registerBookWithMeta(command);
+
+        BookMeta meta = bookMetaRepository.findByIsbn("1234567890123").orElse(null);
+        assertThat(meta).isNotNull();
+        assertThat(meta.getBooks()).contains(book);
+
+        assertThat(book.getBookMeta()).isEqualTo(meta);
+        assertThat(book.getReadingLog()).isNotNull();
+        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("READING");
+        assertThat(book.getStartedAt()).isNotNull();
+        assertThat(book.getFinishedAt()).isNull();
+    }
+
+    @Transactional
+    @Test
+    void registerBookWithMeta_statusFinished_setsFinishedAt() {
+        BookSaveCommand command = new BookSaveCommand(
+            "테스트책2", "저자2", "2025-01-02", "설명2",
+            "2234567890123", "cover2", "카테고리2", "출판사2", "FINISHED"
+        );
+
+        Book book = bookApplicationService.registerBookWithMeta(command);
+
+        assertThat(book.getFinishedAt()).isNotNull();
+        assertThat(book.getStartedAt()).isNull();
+        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("FINISHED");
+    }
+
+    @Transactional
+    @Test
+    void registerBookWithMeta_invalidStatus_shouldThrowException() {
+        BookSaveCommand command = new BookSaveCommand(
+            "테스트책", "저자", "2025-01-01", "설명",
+            "1234567890123", "cover", "카테고리", "출판사", "INVALID"
+        );
+
+        assertThatThrownBy(() -> bookApplicationService.registerBookWithMeta(command))
+            .isInstanceOf(ResponseStatusException.class)
+            .hasMessageContaining("잘못된 Status 값입니다");
+    }
+
+    @Transactional
+    @Test
+    void registerBookWithMeta_existingBookMeta_shouldNotDuplicateMeta() {
+        BookSaveCommand command = new BookSaveCommand(
+            "테스트책", "저자", "2025-01-01", "설명",
+            "1234567890123", "cover", "카테고리", "출판사", "READING"
+        );
+        bookApplicationService.registerBookWithMeta(command);
+
+        Book book2 = bookApplicationService.registerBookWithMeta(command);
+
+        List<BookMeta> metas = bookMetaRepository.findAll();
+        assertThat(metas).hasSize(1);
+        assertThat(metas.getFirst().getBooks()).contains(book2);
+    }
+
+    @Transactional
+    @Test
+    void registerBookWithMeta_statusNull_shouldSetStatusNew() {
+        BookSaveCommand command = new BookSaveCommand(
+            "테스트책", "저자", "2025-01-01", "설명",
+            "1234567890123", "cover", "카테고리", "출판사", null
+        );
+
+        Book book = bookApplicationService.registerBookWithMeta(command);
+
+        assertThat(book.getReadingLog().getStatus().name()).isEqualTo("NEW");
     }
 }

@@ -11,6 +11,6 @@ public class BookSaveHandler {
     private final BookApplicationService bookService;
 
     public void handle(BookSaveCommand command) {
-        bookService.saveBook(command);
+        bookService.registerBookWithMeta(command);
     }
 }
