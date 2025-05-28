@@ -3,8 +3,10 @@ package com.gomdolbook.api.domain.models.bookmeta;
 import com.gomdolbook.api.application.book.command.BookMetaSaveCommand;
 import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.domain.models.book.Book;
+import com.gomdolbook.api.domain.models.bookmetacollection.BookMetaCollection;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -51,6 +53,9 @@ public class BookMeta {
 
     @OneToMany(mappedBy = "bookMeta")
     private final List<Book> books = new ArrayList<>();
+
+    @OneToMany(mappedBy = "bookMeta", fetch = FetchType.LAZY)
+    private final List<BookMetaCollection> bookMetaCollections = new ArrayList<>();
 
     @Builder
     public BookMeta(String title, String author, String pubDate, String description, String isbn,

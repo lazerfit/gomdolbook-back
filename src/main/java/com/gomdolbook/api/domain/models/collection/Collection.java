@@ -1,5 +1,6 @@
 package com.gomdolbook.api.domain.models.collection;
 
+import com.gomdolbook.api.domain.models.bookmetacollection.BookMetaCollection;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.bookcollection.BookCollection;
 import jakarta.persistence.CascadeType;
@@ -33,6 +34,9 @@ public class Collection {
 
     @OneToMany(mappedBy = "collection", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<BookCollection> bookCollections = new ArrayList<>();
+
+    @OneToMany(mappedBy = "collection", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private final List<BookMetaCollection> bookMetaCollections = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "USER_ID")
