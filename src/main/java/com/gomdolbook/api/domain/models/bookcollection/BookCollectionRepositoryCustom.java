@@ -1,4 +1,4 @@
-package com.gomdolbook.api.domain.models.bookCollection;
+package com.gomdolbook.api.domain.models.bookcollection;
 
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverData;
 import com.gomdolbook.api.application.book.dto.BookListData;

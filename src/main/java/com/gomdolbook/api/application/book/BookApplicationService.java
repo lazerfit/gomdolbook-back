@@ -17,9 +17,9 @@ import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
 import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.services.SecurityService;
 import com.gomdolbook.api.domain.shared.BookNotFoundException;
@@ -189,6 +189,11 @@ public class BookApplicationService {
         return ReadingLog.of(user, validateAndConvertStatus(status));
     }
 
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#command.isbn())"),
+        @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey(#command.status())"),
+        @CacheEvict(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()")
+    })
     @UserCheckAndSave
     @Transactional
     public Book registerBookWithMeta(BookSaveCommand command) {
@@ -264,7 +269,7 @@ public class BookApplicationService {
     @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
     public void changeStatus(String isbn, String status) {
-        ReadingLog readingLog = readingLogRepository.findByEmail(isbn,
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,
                 securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new BookNotFoundException("can't not find book: " + isbn));
 
@@ -274,7 +279,7 @@ public class BookApplicationService {
     @CacheEvict(cacheNames = "readingLogCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
     public void changeRating(int rating, String isbn) {
-        ReadingLog readingLog = readingLogRepository.findByEmail(isbn,
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,
                 securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new BookNotFoundException("can't find book: " + isbn));
 

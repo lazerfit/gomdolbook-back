@@ -1,7 +1,7 @@
 package com.gomdolbook.api.application.book.dto;
 
 import com.gomdolbook.api.domain.models.book.Book;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog.Status;
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.Getter;
 

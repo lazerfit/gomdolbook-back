@@ -1,7 +1,7 @@
 package com.gomdolbook.api.domain.models.book;
 
 import static com.gomdolbook.api.domain.models.book.QBook.book;
-import static com.gomdolbook.api.domain.models.readingLog.QReadingLog.readingLog;
+import static com.gomdolbook.api.domain.models.readinglog.QReadingLog.readingLog;
 
 import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.BookListData;
@@ -9,7 +9,7 @@ import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
 import com.gomdolbook.api.application.book.dto.QBookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.QBookListData;
 import com.gomdolbook.api.application.book.dto.QFinishedBookCalendarData;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog.Status;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;

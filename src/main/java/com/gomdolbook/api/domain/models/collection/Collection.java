@@ -1,7 +1,7 @@
 package com.gomdolbook.api.domain.models.collection;
 
 import com.gomdolbook.api.domain.models.user.User;
-import com.gomdolbook.api.domain.models.bookCollection.BookCollection;
+import com.gomdolbook.api.domain.models.bookcollection.BookCollection;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

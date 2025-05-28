@@ -1,9 +1,9 @@
 package com.gomdolbook.api.domain.models.book;
 
 import com.gomdolbook.api.application.book.command.BookSaveCommand;
-import com.gomdolbook.api.domain.models.bookCollection.BookCollection;
+import com.gomdolbook.api.domain.models.bookcollection.BookCollection;
 import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

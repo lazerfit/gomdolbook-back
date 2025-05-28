@@ -1,5 +1,6 @@
 package com.gomdolbook.api.domain.models.bookmeta;
 
+import com.gomdolbook.api.application.book.command.BookMetaSaveCommand;
 import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.domain.models.book.Book;
 import jakarta.persistence.Column;
@@ -65,6 +66,19 @@ public class BookMeta {
     }
 
     public static BookMeta of(BookSaveCommand command) {
+        return BookMeta.builder()
+            .title(command.title())
+            .author(command.author())
+            .pubDate(command.pubDate())
+            .description(command.description())
+            .isbn(command.isbn())
+            .cover(command.cover())
+            .categoryName(command.categoryName())
+            .publisher(command.publisher())
+            .build();
+    }
+
+    public static BookMeta of(BookMetaSaveCommand command) {
         return BookMeta.builder()
             .title(command.title())
             .author(command.author())

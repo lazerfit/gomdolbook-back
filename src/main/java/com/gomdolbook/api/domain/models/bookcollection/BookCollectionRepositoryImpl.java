@@ -1,7 +1,7 @@
-package com.gomdolbook.api.domain.models.bookCollection;
+package com.gomdolbook.api.domain.models.bookcollection;
 
 import static com.gomdolbook.api.domain.models.book.QBook.book;
-import static com.gomdolbook.api.domain.models.bookCollection.QBookCollection.bookCollection;
+import static com.gomdolbook.api.domain.models.bookcollection.QBookCollection.bookCollection;
 import static com.gomdolbook.api.domain.models.collection.QCollection.collection;
 import static com.gomdolbook.api.domain.models.user.QUser.user;
 
@@ -42,9 +42,9 @@ public class BookCollectionRepositoryImpl implements BookCollectionRepositoryCus
 
         return queryFactory.select(
                 new QBookListData(
-                    book.cover,
-                    book.title,
-                    book.isbn,
+                    book.bookMeta.cover,
+                    book.bookMeta.title,
+                    book.bookMeta.isbn,
                     book.readingLog.status
                 )
             ).from(collection)

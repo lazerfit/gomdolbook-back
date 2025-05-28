@@ -1,4 +1,4 @@
-package com.gomdolbook.api.domain.models.readingLog;
+package com.gomdolbook.api.domain.models.readinglog;
 
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.user.User;

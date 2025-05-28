@@ -20,9 +20,9 @@ import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
 import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
@@ -50,6 +50,10 @@ import org.springframework.cache.Cache.ValueWrapper;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -217,12 +221,12 @@ class BookApplicationServiceTest {
     @Transactional
     @Test
     void saveRating() {
-        ReadingLog readingLog = readingLogRepository.findByEmail("9788991290402",
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail("9788991290402",
             "redkafe@daum.net").orElseThrow();
         readingLog.changeRating(1);
         assertThat(readingLog.getRating()).isEqualTo(1);
 
-        ReadingLog updated = readingLogRepository.findByEmail("9788991290402",
+        ReadingLog updated = readingLogRepository.findByIsbnAndEmail("9788991290402",
             "redkafe@daum.net").orElseThrow();
         assertThat(updated.getRating()).isEqualTo(1);
     }
@@ -442,5 +446,101 @@ class BookApplicationServiceTest {
         Book book = bookApplicationService.registerBookWithMeta(command);
 
         assertThat(book.getReadingLog().getStatus().name()).isEqualTo("NEW");
+    }
+
+    @Transactional
+    @Test
+    void registerBookWithMeta_sameIsbn_differentUsers_shouldShareBookMetaButHaveSeparateBooksAndLogs() {
+        BookSaveCommand command = new BookSaveCommand(
+            "테스트책", "저자", "2025-01-01", "설명",
+            "1234567890123", "cover", "카테고리", "출판사", "READING"
+        );
+
+        Book book1 = bookApplicationService.registerBookWithMeta(command);
+
+        SimpleGrantedAuthority roleUser = new SimpleGrantedAuthority("ROLE_USER");
+        Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "none")
+            .claim("authorities", List.of("user"))
+            .claim("email", "redkafe1@daum.net")
+            .build();
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(jwt, null, List.of(roleUser))
+        );
+        Book book2 = bookApplicationService.registerBookWithMeta(command);
+
+        List<BookMeta> metas = bookMetaRepository.findAll();
+        assertThat(metas).hasSize(1);
+        assertThat(book1.getBookMeta()).isSameAs(book2.getBookMeta());
+
+        assertThat(book1).isNotEqualTo(book2);
+        assertThat(book1.getReadingLog()).isNotEqualTo(book2.getReadingLog());
+        assertThat(book1.getReadingLog().getUser().getEmail()).isEqualTo("redkafe@daum.net");
+        assertThat(book2.getReadingLog().getUser().getEmail()).isEqualTo("redkafe1@daum.net");
+    }
+
+    @Transactional
+    @Test
+    void registerBookWithMeta_existingIsbn_differentFields_shouldNotUpdateBookMeta() {
+        BookSaveCommand command1 = new BookSaveCommand(
+            "제목1", "저자1", "2025-01-01", "설명1",
+            "1234567890123", "cover1", "카테고리1", "출판사1", "READING"
+        );
+        BookSaveCommand command2 = new BookSaveCommand(
+            "다른제목", "다른저자", "2026-01-01", "다른설명",
+            "1234567890123", "다른커버", "다른카테고리", "다른출판사", "READING"
+        );
+        bookApplicationService.registerBookWithMeta(command1);
+        Book book2 = bookApplicationService.registerBookWithMeta(command2);
+
+        BookMeta meta = bookMetaRepository.findByIsbn("1234567890123").orElseThrow();
+        assertThat(meta.getTitle()).isEqualTo("제목1");
+        assertThat(meta.getAuthor()).isEqualTo("저자1");
+        assertThat(meta.getBooks()).contains(book2);
+    }
+
+    @Transactional
+    @Test
+    void registerBookWithMeta_missingRequiredField_shouldThrowException() {
+        BookSaveCommand command = new BookSaveCommand(
+            null, "저자", "2025-01-01", "설명",
+            "1234567890123", "cover", "카테고리", "출판사", "READING"
+        );
+        assertThatThrownBy(() -> bookApplicationService.registerBookWithMeta(command))
+            .isInstanceOf(Exception.class);
+    }
+
+    @Transactional
+    @Test
+    void changeStatus_shouldEvictStatusCache() {
+        BookSaveCommand command = new BookSaveCommand(
+            "캐시책", "저자", "2025-01-01", "설명",
+            "5234567890123", "cover", "카테고리", "출판사", "READING"
+        );
+        bookApplicationService.registerBookWithMeta(command);
+        bookApplicationService.getStatus("5234567890123");
+        Cache cache = cacheManager.getCache("statusCache");
+        assertThat(cache.get("redkafe@daum.net:[5234567890123]")).isNotNull();
+
+        bookApplicationService.changeStatus("5234567890123", "FINISHED");
+        assertThat(cache.get("redkafe@daum.net:[5234567890123]")).isNull();
+    }
+
+    @Transactional
+    @Test
+    void deleteBook_shouldNotDeleteBookMeta() {
+        BookSaveCommand command = new BookSaveCommand(
+            "삭제책", "저자", "2025-01-01", "설명",
+            "6234567890123", "cover", "카테고리", "출판사", "READING"
+        );
+        Book book = bookApplicationService.registerBookWithMeta(command);
+        Long metaId = book.getBookMeta().getId();
+
+        bookRepository.delete(book);
+        em.flush();
+        em.clear();
+
+        BookMeta meta = bookMetaRepository.findById(metaId).orElse(null);
+        assertThat(meta).isNotNull();
     }
 }

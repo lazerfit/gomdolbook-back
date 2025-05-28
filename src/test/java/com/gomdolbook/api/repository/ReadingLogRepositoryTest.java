@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gomdolbook.api.common.config.QueryDslConfig;
 import com.gomdolbook.api.domain.models.book.BookRepository;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog.Status;
 import com.gomdolbook.api.domain.models.user.User;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLogRepository;
 import com.gomdolbook.api.util.TestDataFactory;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
