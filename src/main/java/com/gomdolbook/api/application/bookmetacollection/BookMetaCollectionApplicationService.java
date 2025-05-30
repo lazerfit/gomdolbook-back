@@ -64,6 +64,7 @@ public class BookMetaCollectionApplicationService {
         User user = userRepository.find(securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
         collectionRepository.save(Collection.of(user, name));
+        log.info(">>>>>>>>>>>>> createCollection called >>>>>>>>>>>");
     }
 
     @Caching(evict = {

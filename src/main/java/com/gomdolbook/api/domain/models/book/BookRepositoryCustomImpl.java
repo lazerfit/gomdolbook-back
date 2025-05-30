@@ -1,6 +1,7 @@
 package com.gomdolbook.api.domain.models.book;
 
 import static com.gomdolbook.api.domain.models.book.QBook.book;
+import static com.gomdolbook.api.domain.models.bookmeta.QBookMeta.bookMeta;
 import static com.gomdolbook.api.domain.models.readinglog.QReadingLog.readingLog;
 
 import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
@@ -27,9 +28,9 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
 
         BookAndReadingLogData dto = queryFactory.select(
                 new QBookAndReadingLogData(book)).from(book)
-            .join(book.readingLog, readingLog).fetchJoin()
-            .where(book.isbn.eq(isbn))
-            .where(book.readingLog.user.email.eq(email))
+            .join(book.readingLog, readingLog)
+            .join(book.bookMeta, bookMeta)
+            .where(book.isbn.eq(isbn).and(book.readingLog.user.email.eq(email)))
             .fetchFirst();
 
         return Optional.ofNullable(dto);
@@ -38,11 +39,11 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
     @Override
     public List<BookListData> findByStatus(Status status, String email) {
         return queryFactory.select(
-                new QBookListData(book.cover, book.title, book.isbn, book.readingLog.status)
+                new QBookListData(book.bookMeta.cover, book.bookMeta.title, book.bookMeta.isbn, book.readingLog.status)
             ).from(book)
             .join(book.readingLog,readingLog)
-            .where(book.readingLog.user.email.eq(email))
-            .where(book.readingLog.status.eq(status))
+            .join(book.bookMeta, bookMeta)
+            .where(book.readingLog.user.email.eq(email).and(book.readingLog.status.eq(status)))
             .fetch();
     }
 
@@ -51,18 +52,17 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
         return Optional.ofNullable(queryFactory.select(book.readingLog.status)
             .from(book)
             .join(book.readingLog, readingLog)
-            .where(book.readingLog.user.email.eq(email))
-            .where(book.isbn.eq(isbn))
+            .where(book.readingLog.user.email.eq(email).and(book.isbn.eq(isbn)))
             .fetchOne());
     }
 
     @Override
     public List<FinishedBookCalendarData> getFinishedBookCalendarData(String email) {
         return queryFactory.select(
-                new QFinishedBookCalendarData(book.title,book.isbn, book.cover, book.readingLog.rating,book.finishedAt)
+                new QFinishedBookCalendarData(book.bookMeta.title,book.bookMeta.isbn, book.bookMeta.cover, book.readingLog.rating,book.finishedAt)
             ).from(book)
-            .where(book.readingLog.user.email.eq(email))
-            .where(book.readingLog.status.eq(Status.FINISHED))
+            .join(book.bookMeta, bookMeta)
+            .where(book.readingLog.user.email.eq(email).and(book.readingLog.status.eq(Status.FINISHED)))
             .fetch();
     }
 }
