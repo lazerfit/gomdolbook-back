@@ -1,6 +1,5 @@
 package com.gomdolbook.api.domain.models.bookmetacollection;
 
-import static com.gomdolbook.api.domain.models.book.QBook.book;
 import static com.gomdolbook.api.domain.models.bookmeta.QBookMeta.bookMeta;
 import static com.gomdolbook.api.domain.models.bookmetacollection.QBookMetaCollection.bookMetaCollection;
 import static com.gomdolbook.api.domain.models.collection.QCollection.collection;
@@ -23,7 +22,7 @@ public class BookMetaCollectionRepositoryImpl implements BookMetaCollectionRepos
     @Override
     public List<BookCollectionCoverData> getAllCollection(String email) {
         return factory.select(
-                new QBookCollectionCoverData(collection.name, book.cover)
+                new QBookCollectionCoverData(collection.name, bookMeta.cover)
             )
             .from(collection)
             .leftJoin(bookMetaCollection).on(collection.id.eq(bookMetaCollection.collection.id))

@@ -2,6 +2,8 @@ package com.gomdolbook.api.common.config;
 
 import com.gomdolbook.api.application.shared.ApiErrorResponse;
 import com.gomdolbook.api.domain.shared.BookNotFoundException;
+import com.gomdolbook.api.domain.shared.BookNotInCollectionException;
+import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import java.util.ArrayList;
@@ -83,7 +85,7 @@ public class CustomExceptionHandler {
         stringBuilder.append(
             " method is not supported for this request. Supported methods are "
         );
-        Optional.of(ex.getSupportedHttpMethods())
+        Optional.ofNullable(ex.getSupportedHttpMethods())
             .ifPresentOrElse(httpMethods -> httpMethods.forEach(
                     httpMethod -> stringBuilder.append(httpMethod).append(" ")),
                 () -> stringBuilder.append("No Supported HTTP method available"));
@@ -127,5 +129,21 @@ public class CustomExceptionHandler {
     public ResponseEntity<Object> handleAll(Exception ex, WebRequest request) {
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "error occurred");
         return new ResponseEntity<>(apiErrorResponse, new HttpHeaders(), apiErrorResponse.getStatus());
+    }
+
+    @ExceptionHandler({CollectionNotFoundException.class})
+    public ResponseEntity<Object> handleCollectionNotFound(CollectionNotFoundException ex, WebRequest request) {
+        String error = ex.getMessage();
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(HttpStatus.BAD_REQUEST, error);
+        return new ResponseEntity<>(apiErrorResponse, new HttpHeaders(),
+            apiErrorResponse.getStatus());
+    }
+
+    @ExceptionHandler({BookNotInCollectionException.class})
+    public ResponseEntity<Object> handleCollectionNotFound(BookNotInCollectionException ex, WebRequest request) {
+        String error = ex.getMessage();
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(HttpStatus.BAD_REQUEST, error);
+        return new ResponseEntity<>(apiErrorResponse, new HttpHeaders(),
+            apiErrorResponse.getStatus());
     }
 }

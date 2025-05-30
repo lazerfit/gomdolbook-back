@@ -15,6 +15,8 @@ import com.gomdolbook.api.domain.models.collection.CollectionRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.domain.services.SecurityService;
+import com.gomdolbook.api.domain.shared.BookNotFoundException;
+import com.gomdolbook.api.domain.shared.BookNotInCollectionException;
 import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
 import com.gomdolbook.api.domain.shared.UserValidationError;
 import java.util.List;
@@ -49,6 +51,8 @@ public class BookMetaCollectionApplicationService {
     @Cacheable(cacheNames = "collectionCache", keyGenerator = "customKeyGenerator", unless = "#result.isEmpty()")
     @Transactional(readOnly = true)
     public List<CollectionBookMetaData> getCollection(String name) {
+        collectionRepository.find(name, securityService.getUserEmailFromSecurityContext())
+            .orElseThrow(() -> new CollectionNotFoundException("존재하지 않는 컬렉션입니다."));
         return bookMetaCollectionRepository.getCollectionData(
             securityService.getUserEmailFromSecurityContext(), name);
     }
@@ -107,7 +111,7 @@ public class BookMetaCollectionApplicationService {
 
         BookMetaCollection bookMetaCollection = bookMetaCollectionRepository.findByUserAndBookMetaAndCollection(
                 user, bookMeta, collection)
-            .orElseThrow(() -> new IllegalStateException("해당 컬렉션에 등록되어있지 않은 책입니다."));
+            .orElseThrow(() -> new BookNotInCollectionException("해당 컬렉션에 등록되어있지 않은 책입니다."));
         bookMetaCollectionRepository.delete(bookMetaCollection);
         bookMeta.getBookMetaCollections().remove(bookMetaCollection);
         collection.getBookMetaCollections().remove(bookMetaCollection);
@@ -121,11 +125,11 @@ public class BookMetaCollectionApplicationService {
 
     private BookMeta getBookMetaByIsbn(String isbn) {
         return bookMetaRepository.findByIsbn(isbn)
-            .orElseThrow(() -> new IllegalStateException("책을 찾을 수 없습니다: " + isbn));
+            .orElseThrow(() -> new BookNotFoundException("책을 찾을 수 없습니다: " + isbn));
     }
 
     private Collection getCollectionByNameAndUser(String collectionName, String email) {
         return collectionRepository.find(collectionName, email)
-            .orElseThrow(() -> new RuntimeException("컬렉션을 찾을 수 없습니다: " + collectionName));
+            .orElseThrow(() -> new CollectionNotFoundException("컬렉션을 찾을 수 없습니다: " + collectionName));
     }
 }
