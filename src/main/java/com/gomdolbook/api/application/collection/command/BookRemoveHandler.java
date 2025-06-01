@@ -1,6 +1,6 @@
 package com.gomdolbook.api.application.collection.command;
 
-import com.gomdolbook.api.application.bookCollection.BookCollectionApplicationService;
+import com.gomdolbook.api.application.bookcollection.BookCollectionApplicationService;
 import com.gomdolbook.api.application.shared.CommandHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

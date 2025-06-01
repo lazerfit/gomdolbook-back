@@ -1,4 +1,4 @@
-package com.gomdolbook.api.application.bookCollection;
+package com.gomdolbook.api.application.bookcollection;
 
 import com.gomdolbook.api.application.book.BookApplicationService;
 import com.gomdolbook.api.application.book.command.BookSaveCommand;

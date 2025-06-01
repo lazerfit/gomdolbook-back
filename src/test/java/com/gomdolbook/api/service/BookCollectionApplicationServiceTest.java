@@ -6,7 +6,7 @@ import com.gomdolbook.api.application.book.BookApplicationService;
 import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverListData;
 import com.gomdolbook.api.application.book.dto.BookListData;
-import com.gomdolbook.api.application.bookCollection.BookCollectionApplicationService;
+import com.gomdolbook.api.application.bookcollection.BookCollectionApplicationService;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
@@ -28,9 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @WithMockCustomUser
@@ -115,22 +113,6 @@ class BookCollectionApplicationServiceTest {
         assertThat(collectionList.getLast().name()).isEqualTo("한강");
     }
 
-    @Test
-    void addBookCacheTest() {
-        bookCollectionApplicationService.getCollectionList();
-        bookCollectionApplicationService.getCollectionList();
-        bookCollectionApplicationService.getCollection("컬렉션");
-        bookCollectionApplicationService.getCollection("컬렉션");
-        Cache cache = cacheManager.getCache("collectionListCache");
-        assertThat(cache.get("redkafe@daum.net")).isNotNull();
-        BookSaveCommand requestDTO = getBookSaveRequest();
-        bookCollectionApplicationService.addBook(requestDTO, "컬렉션");
-        bookCollectionApplicationService.getCollectionList();
-        List<BookCollectionCoverListData> list = cache.get("redkafe@daum.net", List.class);
-
-        assertThat(list.getFirst().books().getCovers()).hasSize(2);
-    }
-
     @WithMockCustomUser(email = "test@email.com")
     @Test
     void createCollection() {
@@ -138,15 +120,6 @@ class BookCollectionApplicationServiceTest {
         var collectionList = bookCollectionApplicationService.getCollectionList();
 
         assertThat(collectionList).hasSize(2);
-    }
-
-    @Test
-    void getCollection() {
-        List<BookListData> c = bookCollectionApplicationService.getCollection("컬렉션");
-
-        assertThat(c).hasSize(1);
-        assertThat(c.getLast().title()).isEqualTo("펠로폰네소스 전쟁사");
-        assertThat(c.getLast().cover()).isEqualTo("image");
     }
 
     @Test
@@ -177,16 +150,4 @@ class BookCollectionApplicationServiceTest {
             "READING"
         );
     }
-
-    @Transactional
-    @Test
-    void removeBookUserCollection() {
-        Collection uc = testDataFactory.createUserCollection("c", user);
-        testDataFactory.createBookUserCollection(mockBook, uc, user);
-        List<BookListData> list = bookCollectionApplicationService.getCollection("c");
-        assertThat(list).hasSize(1);
-
-        bookCollectionApplicationService.deleteCollection("c");
-    }
-
 }

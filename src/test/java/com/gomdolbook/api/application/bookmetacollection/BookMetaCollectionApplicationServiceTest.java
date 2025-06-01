@@ -14,6 +14,7 @@ import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.User.Role;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.domain.services.SecurityService;
+import com.gomdolbook.api.domain.shared.BookNotFoundException;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,7 +74,7 @@ class BookMetaCollectionApplicationServiceTest {
     @Test
     void removeBookFromCollection_존재하지않는책_예외() {
         collectionRepository.save(Collection.of(user, "내컬렉션"));
-        assertThrows(IllegalStateException.class, () -> service.removeBookFromCollection("9999999999999", "내컬렉션"));
+        assertThrows(BookNotFoundException.class, () -> service.removeBookFromCollection("9999999999999", "내컬렉션"));
     }
 
     @Test

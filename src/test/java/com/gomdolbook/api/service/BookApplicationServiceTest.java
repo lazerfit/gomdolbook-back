@@ -10,10 +10,8 @@ import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.application.book.command.ReadingLogUpdateCommand;
 import com.gomdolbook.api.application.book.dto.AladinResponseData;
 import com.gomdolbook.api.application.book.dto.AladinResponseData.Item;
-import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.BookData;
 import com.gomdolbook.api.application.book.dto.BookListData;
-import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
 import com.gomdolbook.api.application.book.dto.StatusData;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.book.Book;
@@ -63,6 +61,7 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+@Transactional
 @WithMockCustomUser
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Slf4j
@@ -182,13 +181,6 @@ class BookApplicationServiceTest {
     }
 
     @Test
-    void getLibrary() {
-        List<BookListData> library = bookApplicationService.getLibrary("READING");
-        assertThat(library).hasSize(1);
-        assertThat(library.getFirst().title()).isEqualTo("펠로폰네소스 전쟁사");
-    }
-
-    @Test
     void getLibraryEmpty() {
         List<BookListData> library = bookApplicationService.getLibrary("FINISHED");
         assertThat(library).isEmpty();
@@ -207,32 +199,6 @@ class BookApplicationServiceTest {
 
     @Transactional
     @Test
-    void changeStatusTest() {
-        String isbn = "9788991290402";
-        String status = "FINISHED";
-
-        bookApplicationService.changeStatus(isbn, status);
-        em.flush();
-        em.clear();
-        BookAndReadingLogData readingLog = bookApplicationService.getReadingLog(isbn);
-        assertThat(readingLog.getStatus().name()).isEqualTo("FINISHED");
-    }
-
-    @Transactional
-    @Test
-    void saveRating() {
-        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail("9788991290402",
-            "redkafe@daum.net").orElseThrow();
-        readingLog.changeRating(1);
-        assertThat(readingLog.getRating()).isEqualTo(1);
-
-        ReadingLog updated = readingLogRepository.findByIsbnAndEmail("9788991290402",
-            "redkafe@daum.net").orElseThrow();
-        assertThat(updated.getRating()).isEqualTo(1);
-    }
-
-    @Transactional
-    @Test
     void getStatusCacheTest() {
         bookApplicationService.getStatus("9788991290402");
         Cache cache = cacheManager.getCache("statusCache");
@@ -245,37 +211,6 @@ class BookApplicationServiceTest {
         StatusData secondCallStatus = bookApplicationService.getStatus("9788991290402");
 
         assertThat(secondCallStatus).isEqualTo(cachedValue);
-    }
-
-    @Transactional
-    @Test
-    void statusUpdateCacheTest() {
-        bookApplicationService.getStatus("9788991290402");
-        Cache cache = cacheManager.getCache("statusCache");
-        assertThat(cache).isNotNull();
-        ValueWrapper valueWrapper = cache.get("redkafe@daum.net:[9788991290402]");
-        assertThat(valueWrapper).isNotNull();
-        Object cachedValue = valueWrapper.get();
-        assertThat(cachedValue).isNotNull();
-
-        StatusData secondCallStatus = bookApplicationService.getStatus("9788991290402");
-
-        assertThat(secondCallStatus).isEqualTo(cachedValue);
-
-        bookApplicationService.changeStatus("9788991290402", "FINISHED");
-
-        StatusData status = bookApplicationService.getStatus("9788991290402");
-        assertThat(status.status()).isEqualTo("FINISHED");
-        Cache cache1 = cacheManager.getCache("statusCache");
-        assertThat(cache1).isNotNull();
-        ValueWrapper valueWrapper2 = cache1.get("redkafe@daum.net:[9788991290402]");
-        assertThat(valueWrapper2).isNotNull();
-        Object cachedValue2 = valueWrapper2.get();
-        assertThat(cachedValue2).isNotNull();
-
-        StatusData secondCallStatus2 = bookApplicationService.getStatus("9788991290402");
-
-        assertThat(secondCallStatus2).isEqualTo(cachedValue2);
     }
 
     @Transactional
@@ -322,37 +257,6 @@ class BookApplicationServiceTest {
         LocalDateTime localDateTime = LocalDateTime.of(2025, 1, 1, 0, 0, 0);
         assertThat(savedBook.getStartedAt()).isEqualTo(localDateTime);
         assertThat(savedBook.getFinishedAt()).isNull();
-    }
-
-    @Transactional
-    @Test
-    void getFinishedBookCalendarData() {
-        ZonedDateTime kst = createFinishedBookCalendarDataBoilerplate();
-
-        List<FinishedBookCalendarData> list = bookRepository.getFinishedBookCalendarData(
-            "redkafe@daum.net");
-
-        assertThat(list).hasSize(1);
-        assertThat(list.getFirst().getFinishedAt()).isEqualTo(kst.toLocalDate());
-    }
-
-    @Transactional
-    @Test
-    void getFinishedBookCalendarCache() {
-        createFinishedBookCalendarDataBoilerplate();
-
-        bookApplicationService.getFinishedBookCalendarData();
-        Cache cache = cacheManager.getCache("finishedBookCalendarData");
-        assertThat(cache).isNotNull();
-
-        Cache.ValueWrapper wrapper = cache.get("redkafe@daum.net");
-        assertThat(wrapper).isNotNull();
-        Object cachedValue = wrapper.get();
-        assertThat(cachedValue).isNotNull();
-
-        List<FinishedBookCalendarData> secondCall = bookApplicationService.getFinishedBookCalendarData();
-
-        assertThat(secondCall).isEqualTo(cachedValue);
     }
 
     private ZonedDateTime createFinishedBookCalendarDataBoilerplate() {

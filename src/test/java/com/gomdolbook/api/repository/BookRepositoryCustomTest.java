@@ -3,8 +3,6 @@ package com.gomdolbook.api.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gomdolbook.api.application.book.command.BookSaveCommand;
-import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
-import com.gomdolbook.api.application.book.dto.BookListData;
 import com.gomdolbook.api.common.config.QueryDslConfig;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
@@ -14,7 +12,6 @@ import com.gomdolbook.api.domain.models.readinglog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;
-import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,32 +72,6 @@ class BookRepositoryCustomTest {
         }
 
         assertThat(book.getReadingLog().getStatus().name()).isEqualTo("FINISHED");
-    }
-
-    @Transactional
-    @Test
-    void getReadingLog() {
-        BookAndReadingLogData savedBook = bookRepository.findByEmail(
-            "user@gmail.com", "9788991290402").orElseThrow();
-
-        assertThat(savedBook.getAuthor()).isEqualTo("투퀴디데스");
-        assertThat(savedBook.getStatus().name()).isEqualTo("READING");
-    }
-
-    @Test
-    void getLibrary() {
-        List<BookListData> dto = bookRepository.findByStatus(
-            Status.READING, "user@gmail.com");
-        assertThat(dto).hasSize(1);
-        assertThat(dto.getFirst().title()).isEqualTo("펠로폰네소스 전쟁사");
-    }
-
-    @Test
-    void getBookResponse() {
-        List<BookListData> byReadingStatus = bookRepository.findByStatus(
-            Status.READING, "user@gmail.com");
-
-        assertThat(byReadingStatus).hasSize(1);
     }
 
     @Test

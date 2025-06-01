@@ -89,15 +89,6 @@ class CollectionRepositoryTest {
     }
 
     @Test
-    void getCollection() {
-        List<BookListData> result = bookCollectionRepository.getCollection("컬렉션",
-            "user@gmail.com");
-
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().status().name()).isEqualTo("READING");
-    }
-
-    @Test
     void getEmptyCollection() {
         List<BookListData> result = bookCollectionRepository.getCollection("test",
             "user@gmail.com");

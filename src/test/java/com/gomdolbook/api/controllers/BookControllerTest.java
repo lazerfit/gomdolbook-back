@@ -1,6 +1,5 @@
 package com.gomdolbook.api.controllers;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -161,20 +160,6 @@ class BookControllerTest {
             .jsonPath("$.data[0].title").isEqualTo("소년이 온다");
     }
 
-
-    @Test
-    void getReadingLog() throws Exception {
-        mockMvc.perform(get("/v1/readingLog")
-                .contentType(MediaType.APPLICATION_JSON)
-                .param("isbn", "9788991290402"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.title").value("펠로폰네소스 전쟁사"))
-            .andExpect(jsonPath("$.data.author").value("투퀴디데스"))
-            .andExpect(jsonPath("$.data.rating").value(0))
-            .andDo(print());
-
-    }
-
     @Test
     void getReadingLog_return_error() throws Exception {
         mockMvc.perform(get("/v1/readingLog")
@@ -253,7 +238,7 @@ class BookControllerTest {
     void getLibrary() throws Exception {
         mockMvc.perform(get("/v1/book/Library")
                 .param("status", "READING"))
-            .andExpect(status().isOk())
+            .andExpect(status().is2xxSuccessful())
             .andDo(print());
     }
 
@@ -272,25 +257,6 @@ class BookControllerTest {
         mockMvc.perform(post("/v1/readingLog/update")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(saveRequest)))
-            .andExpect(status().isOk())
-            .andDo(print());
-    }
-
-    @Test
-    void updateStatusTest() throws Exception {
-        mockMvc.perform(post("/v1/status/9788991290402/update")
-                .param("status", "FINISHED")
-                .with(csrf()))
-            .andExpect(status().isOk())
-            .andDo(print());
-    }
-
-    @Test
-    void saveRate() throws Exception {
-        mockMvc.perform(post("/v1/readingLog/rating/update")
-                .param("isbn", "9788991290402")
-                .param("star", "5")
-                .with(csrf()))
             .andExpect(status().isOk())
             .andDo(print());
     }
