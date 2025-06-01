@@ -10,11 +10,12 @@ import com.gomdolbook.api.common.config.annotations.PreAuthorizeWithContainsUser
 import com.gomdolbook.api.common.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
-import com.gomdolbook.api.domain.models.bookCollection.BookCollection;
-import com.gomdolbook.api.domain.models.bookCollection.BookCollectionRepository;
+import com.gomdolbook.api.domain.models.bookcollection.BookCollection;
+import com.gomdolbook.api.domain.models.bookcollection.BookCollectionRepository;
+import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
 import com.gomdolbook.api.domain.models.collection.Collection;
 import com.gomdolbook.api.domain.models.collection.CollectionRepository;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.domain.services.SecurityService;
@@ -46,6 +47,7 @@ public class BookCollectionApplicationService {
     private final SecurityService securityService;
     private final ReadingLogRepository readingLogRepository;
     private final BookRepository bookRepository;
+    private final BookMetaRepository bookMetaRepository;
 
     @Cacheable(cacheNames = "collectionListCache", key = "@securityService.getUserEmailFromSecurityContext()", unless = "#result.isEmpty()")
     @Transactional(readOnly = true)
@@ -95,22 +97,16 @@ public class BookCollectionApplicationService {
     @Transactional
     public void addBook(BookSaveCommand command, String collectionName) {
         String email = securityService.getUserEmailFromSecurityContext();
+        User user = userRepository.find(email)
+            .orElseThrow(() -> new UserValidationError("해당 유저를 찾을 수 없습니다."));
         Collection collection = collectionRepository.find(collectionName,
                 email)
             .orElseThrow(() -> new RuntimeException("컬렉션을 찾을 수 없습니다." + collectionName));
-        User user = userRepository.find(email)
-            .orElseThrow(() -> new UserValidationError("해당 유저를 찾을 수 없습니다."));
 
-        Book book = bookApplicationService.find(command.isbn()).orElseGet(() -> bookApplicationService.saveBook(command));
-        log.info(">>> book.id = {}", book.getId());
+        Book book = bookApplicationService.find(command.isbn()).orElseGet(() -> bookApplicationService.registerBookWithMeta(command));
         boolean isDuplicate = bookCollectionRepository.existsBook(user, collection, book);
         if (!isDuplicate) {
             BookCollection bookCollection = BookCollection.of(user, collection, book);
-            log.info(">>> BUC: user = {}, collection = {}, book = {}",
-                bookCollection.getUser().getEmail(),
-                bookCollection.getCollection().getName(),
-                bookCollection.getBook().getTitle());
-
             bookCollectionRepository.save(bookCollection);
         }
     }

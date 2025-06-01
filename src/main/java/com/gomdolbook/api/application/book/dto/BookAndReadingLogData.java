@@ -1,7 +1,7 @@
 package com.gomdolbook.api.application.book.dto;
 
 import com.gomdolbook.api.domain.models.book.Book;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog.Status;
 import com.querydsl.core.annotations.QueryProjection;
 import lombok.Getter;
 
@@ -21,11 +21,11 @@ public class BookAndReadingLogData {
 
     @QueryProjection
     public BookAndReadingLogData(Book book) {
-        title = book.getTitle();
-        author = book.getAuthor();
-        pubDate = book.getPubDate();
-        cover = book.getCover();
-        publisher = book.getPublisher();
+        title = book.getBookMeta().getTitle();
+        author = book.getBookMeta().getAuthor();
+        pubDate = book.getBookMeta().getPubDate();
+        cover = book.getBookMeta().getCover();
+        publisher = book.getBookMeta().getPublisher();
         status = book.getReadingLog().getStatus();
         note1 = book.getReadingLog().getNote1();
         note2 = book.getReadingLog().getNote2();

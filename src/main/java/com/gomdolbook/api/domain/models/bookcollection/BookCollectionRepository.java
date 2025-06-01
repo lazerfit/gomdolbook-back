@@ -1,4 +1,4 @@
-package com.gomdolbook.api.domain.models.bookCollection;
+package com.gomdolbook.api.domain.models.bookcollection;
 
 import com.gomdolbook.api.common.config.annotations.DomainRepository;
 import com.gomdolbook.api.domain.models.book.Book;

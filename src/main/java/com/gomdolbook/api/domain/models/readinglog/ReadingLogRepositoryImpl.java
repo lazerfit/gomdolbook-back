@@ -1,7 +1,7 @@
-package com.gomdolbook.api.domain.models.readingLog;
+package com.gomdolbook.api.domain.models.readinglog;
 
 import static com.gomdolbook.api.domain.models.book.QBook.book;
-import static com.gomdolbook.api.domain.models.readingLog.QReadingLog.readingLog;
+import static com.gomdolbook.api.domain.models.readinglog.QReadingLog.readingLog;
 import static com.gomdolbook.api.domain.models.user.QUser.user;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;

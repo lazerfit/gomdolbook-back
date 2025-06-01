@@ -1,7 +1,7 @@
-package com.gomdolbook.api.domain.models.readingLog;
+package com.gomdolbook.api.domain.models.readinglog;
 
-import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.book.Book;
+import com.gomdolbook.api.domain.models.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -55,7 +55,7 @@ public class ReadingLog {
     private User user;
 
     @Setter
-    @OneToOne(mappedBy = "readingLog", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "readingLog")
     private Book book;
 
     private ReadingLog(Status status) {

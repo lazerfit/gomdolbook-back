@@ -16,9 +16,11 @@ import com.gomdolbook.api.common.config.annotations.PreAuthorizeWithContainsUser
 import com.gomdolbook.api.common.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog.Status;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
+import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog.Status;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.services.SecurityService;
 import com.gomdolbook.api.domain.shared.BookNotFoundException;
@@ -56,6 +58,7 @@ import reactor.util.retry.Retry;
 public class BookApplicationService {
 
     private final BookRepository bookRepository;
+    private final BookMetaRepository bookMetaRepository;
     private final UserApplicationService userApplicationService;
     private final WebClient webClient;
     private final ReadingLogRepository readingLogRepository;
@@ -148,6 +151,10 @@ public class BookApplicationService {
                     retrySignal -> log.info("[retry] {}", retrySignal.toString())));
     }
 
+    /*
+    * @deprecated BookMeta 도입 이전 도서 저장 로직. registerBookWithMeta()를 사용하세요.
+    */
+    @Deprecated(since = "1.0.1")
     @Caching(evict = {
         @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#command.isbn())"),
         @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey(#command.status())"),
@@ -169,6 +176,7 @@ public class BookApplicationService {
         return bookRepository.save(book);
     }
 
+    @Deprecated(since = "1.0.1")
     private Book createBookWithReadingLog(BookSaveCommand command, User user) {
         Book book = Book.of(command);
         ReadingLog readingLog = setDefaultReadingLog(command, user);
@@ -176,10 +184,52 @@ public class BookApplicationService {
         return book;
     }
 
+    @Deprecated(since = "1.0.1")
     private ReadingLog setDefaultReadingLog(BookSaveCommand command, User user) {
         String status = (command.status() == null || command.status().isBlank()) ? "NEW"
             : command.status();
         return ReadingLog.of(user, validateAndConvertStatus(status));
+    }
+
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#command.isbn())"),
+        @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey(#command.status())"),
+        @CacheEvict(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()")
+    })
+    @UserCheckAndSave
+    @Transactional
+    public Book registerBookWithMeta(BookSaveCommand command) {
+        User user = userApplicationService.find(securityService.getUserEmailFromSecurityContext())
+            .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
+        BookMeta bookMeta = bookMetaRepository.findByIsbn(command.isbn())
+            .orElseGet(() -> bookMetaRepository.save(BookMeta.of(command)));
+        Book book = createBookWithReadingLog(bookMeta, command.status(), user);
+        setBookReadingPeriodByStatus(book, command.status());
+        return bookRepository.save(book);
+    }
+
+    private Book createBookWithReadingLog(BookMeta bookMeta, String status,  User user) {
+        Book book = Book.of(bookMeta);
+        ReadingLog readingLog = setDefaultReadingLog(status, user);
+        book.setReadingLog(readingLog);
+        return book;
+    }
+
+    private ReadingLog setDefaultReadingLog(String initialStatus, User user) {
+        String status = (initialStatus == null || initialStatus.isBlank()) ? "NEW"
+            : initialStatus;
+        return ReadingLog.of(user, validateAndConvertStatus(status));
+    }
+
+    private void setBookReadingPeriodByStatus(Book book, String status) {
+        if (status == null) return;
+        if (status.equals("READING") ) {
+            ZonedDateTime kst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+            book.changeStartedAt(kst.toLocalDateTime());
+        } else if (status.equals("FINISHED")) {
+            ZonedDateTime kst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+            book.changeFinishedAt(kst.toLocalDateTime());
+        }
     }
 
     private Status validateAndConvertStatus(String statusString)
@@ -221,7 +271,7 @@ public class BookApplicationService {
     @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
     public void changeStatus(String isbn, String status) {
-        ReadingLog readingLog = readingLogRepository.findByEmail(isbn,
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,
                 securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new BookNotFoundException("can't not find book: " + isbn));
 
@@ -231,7 +281,7 @@ public class BookApplicationService {
     @CacheEvict(cacheNames = "readingLogCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
     public void changeRating(int rating, String isbn) {
-        ReadingLog readingLog = readingLogRepository.findByEmail(isbn,
+        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,
                 securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new BookNotFoundException("can't find book: " + isbn));
 

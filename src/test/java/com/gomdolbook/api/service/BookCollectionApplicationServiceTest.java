@@ -10,11 +10,11 @@ import com.gomdolbook.api.application.bookCollection.BookCollectionApplicationSe
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.BookRepository;
-import com.gomdolbook.api.domain.models.bookCollection.BookCollectionRepository;
+import com.gomdolbook.api.domain.models.bookcollection.BookCollectionRepository;
 import com.gomdolbook.api.domain.models.collection.Collection;
 import com.gomdolbook.api.domain.models.collection.CollectionRepository;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLogRepository;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.util.TestDataFactory;

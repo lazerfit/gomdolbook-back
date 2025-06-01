@@ -1,8 +1,9 @@
 package com.gomdolbook.api.domain.models.book;
 
 import com.gomdolbook.api.application.book.command.BookSaveCommand;
-import com.gomdolbook.api.domain.models.bookCollection.BookCollection;
-import com.gomdolbook.api.domain.models.readingLog.ReadingLog;
+import com.gomdolbook.api.domain.models.bookcollection.BookCollection;
+import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
+import com.gomdolbook.api.domain.models.readinglog.ReadingLog;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
@@ -61,6 +63,10 @@ public class Book {
     @Column
     private LocalDateTime finishedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "BOOK_META_ID")
+    private BookMeta bookMeta;
+
     @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     @JoinColumn(name = "READINGLOG_ID")
     private ReadingLog readingLog;
@@ -103,6 +109,15 @@ public class Book {
             .categoryName(command.categoryName())
             .publisher(command.publisher())
             .build();
+    }
+
+    public static Book of(BookMeta meta) {
+        Book book = new Book();
+        book.bookMeta = meta;
+        if (meta != null) {
+            meta.getBooks().add(book);
+        }
+        return book;
     }
 
     public void changeStartedAt(LocalDateTime startedAt) {
