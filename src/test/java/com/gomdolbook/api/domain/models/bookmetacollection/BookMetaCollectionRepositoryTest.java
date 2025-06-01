@@ -3,7 +3,9 @@ package com.gomdolbook.api.domain.models.bookmetacollection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.gomdolbook.api.application.book.command.BookMetaSaveCommand;
+import com.gomdolbook.api.application.bookmetacollection.BookMetaCollectionApplicationService;
 import com.gomdolbook.api.application.bookmetacollection.dto.CollectionBookMetaData;
+import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
 import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
 import com.gomdolbook.api.domain.models.collection.Collection;
@@ -29,6 +31,8 @@ class BookMetaCollectionRepositoryTest {
     CollectionRepository collectionRepository;
     @Autowired
     BookMetaRepository bookMetaRepository;
+    @Autowired
+    BookMetaCollectionApplicationService service;
 
     @Test
     void saveAndFindByUser_정상등록_조회() {
@@ -100,5 +104,24 @@ class BookMetaCollectionRepositoryTest {
 
         assertThat(bookMetaCollectionRepository.findByUser(user1)).hasSize(1);
         assertThat(bookMetaCollectionRepository.findByUser(user2)).hasSize(1);
+    }
+
+    @WithMockCustomUser
+    @Test
+    void isBookExistsInCollection_정상동작() {
+        User user = userRepository.save(new User("redkafe@daum.net", "img", Role.USER));
+        BookMetaSaveCommand command = new BookMetaSaveCommand(
+            "삭제책", "저자", "2025-01-01", "설명",
+            "6234567890123", "cover", "카테고리", "출판사"
+        );
+        BookMeta bookMeta = bookMetaRepository.save(BookMeta.of(command));
+        Collection collection = collectionRepository.save(Collection.of(user, "내컬렉션"));
+        bookMetaCollectionRepository.save(BookMetaCollection.of(bookMeta, collection, user));
+
+        boolean exists = service.isBookExistsInCollection("내컬렉션", "6234567890123");
+        boolean notExists = service.isBookExistsInCollection("내컬렉션", "999999999");
+
+        assertThat(exists).isTrue();
+        assertThat(notExists).isFalse();
     }
 }

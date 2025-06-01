@@ -133,4 +133,10 @@ public class BookMetaCollectionApplicationService {
         return collectionRepository.find(collectionName, email)
             .orElseThrow(() -> new CollectionNotFoundException("컬렉션을 찾을 수 없습니다: " + collectionName));
     }
+
+    @Transactional(readOnly = true)
+    public boolean isBookExistsInCollection(String name, String isbn) {
+        String email = securityService.getUserEmailFromSecurityContext();
+        return bookMetaCollectionRepository.existsBookInCollection(email, name, isbn);
+    }
 }

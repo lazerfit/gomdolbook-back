@@ -93,4 +93,14 @@ public class CollectionController {
         removeBookFromCollectionHandler.handle(command);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/v2/collections/{name}/book/{isbn}/exists")
+    public ResponseEntity<Object> isBookExistsInCollection(@PathVariable String name,
+        @PathVariable String isbn) {
+        boolean bookExistsInCollection = bookMetaCollectionApplicationService.isBookExistsInCollection(
+            name, isbn);
+        ApiResponse<Boolean> response = new ApiResponse<>(bookExistsInCollection);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

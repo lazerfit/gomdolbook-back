@@ -8,4 +8,5 @@ public interface BookMetaCollectionRepositoryCustom {
 
     List<BookCollectionCoverData> getAllCollection(String email);
     List<CollectionBookMetaData> getCollectionData(String email, String collectionName);
+    boolean existsBookInCollection(String email, String collectionName, String isbn);
 }

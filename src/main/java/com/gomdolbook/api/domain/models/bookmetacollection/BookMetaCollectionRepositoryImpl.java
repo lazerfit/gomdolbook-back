@@ -47,4 +47,14 @@ public class BookMetaCollectionRepositoryImpl implements BookMetaCollectionRepos
             .where(bookMetaCollection.isNotNull())
             .fetch();
     }
+
+    @Override
+    public boolean existsBookInCollection(String email, String collectionName, String isbn) {
+        return factory.selectOne()
+            .from(bookMetaCollection)
+            .where(bookMetaCollection.user.email.eq(email)
+                .and(bookMetaCollection.collection.name.eq(collectionName))
+                .and(bookMetaCollection.bookMeta.isbn.eq(isbn))).fetchFirst() != null;
+    }
+
 }

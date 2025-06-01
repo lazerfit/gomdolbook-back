@@ -188,4 +188,17 @@ class CollectionControllerTest {
             .andDo(print());
     }
 
+    @Test
+    void isBookExistsInCollection() throws Exception {
+        Collection collection = collectionRepository.save(Collection.of(user, "내컬렉션"));
+        BookMetaSaveCommand command = new BookMetaSaveCommand("제목1", "저자1",
+            "2025-01-01", "설명1", "2345678901234", "cover1", "카테고리", "출판사");
+        BookMeta bookMeta = bookMetaRepository.save(BookMeta.of(command));
+        bookMetaCollectionRepository.save(BookMetaCollection.of(bookMeta,collection,user));
+
+        mockMvc.perform(get("/v2/collections/{name}/book/{isbn}/exists", "내컬렉션", "2345678901234"))
+            .andExpect(status().isOk())
+            .andDo(print());
+    }
+
 }
