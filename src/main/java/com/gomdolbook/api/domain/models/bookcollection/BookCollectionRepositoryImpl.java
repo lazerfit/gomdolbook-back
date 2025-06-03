@@ -63,7 +63,7 @@ public class BookCollectionRepositoryImpl implements BookCollectionRepositoryCus
             .join(bookCollection.book, book)
             .where(bookCollection.user.email.eq(email))
             .where(bookCollection.collection.name.eq(name))
-            .where(bookCollection.book.isbn.eq(isbn))
+            .where(bookCollection.book.bookMeta.isbn.eq(isbn))
             .fetchOne();
 
         return Optional.ofNullable(collection);

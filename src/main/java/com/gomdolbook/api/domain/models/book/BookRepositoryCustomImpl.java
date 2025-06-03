@@ -30,7 +30,7 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
                 new QBookAndReadingLogData(book)).from(book)
             .join(book.readingLog, readingLog)
             .join(book.bookMeta, bookMeta)
-            .where(book.isbn.eq(isbn).and(book.readingLog.user.email.eq(email)))
+            .where(book.bookMeta.isbn.eq(isbn).and(book.readingLog.user.email.eq(email)))
             .fetchFirst();
 
         return Optional.ofNullable(dto);
@@ -52,7 +52,7 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
         return Optional.ofNullable(queryFactory.select(book.readingLog.status)
             .from(book)
             .join(book.readingLog, readingLog)
-            .where(book.readingLog.user.email.eq(email).and(book.isbn.eq(isbn)))
+            .where(book.readingLog.user.email.eq(email).and(book.bookMeta.isbn.eq(isbn)))
             .fetchOne());
     }
 

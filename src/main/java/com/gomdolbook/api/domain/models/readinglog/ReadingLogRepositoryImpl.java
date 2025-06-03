@@ -21,7 +21,7 @@ public class ReadingLogRepositoryImpl implements ReadingLogRepositoryCustom{
             .join(readingLog.user, user)
             .join(readingLog.book, book)
             .where(readingLog.user.email.eq(email))
-            .where(readingLog.book.isbn.eq(isbn))
+            .where(readingLog.book.bookMeta.isbn.eq(isbn))
             .fetchOne();
 
         return Optional.ofNullable(result).orElse(0);

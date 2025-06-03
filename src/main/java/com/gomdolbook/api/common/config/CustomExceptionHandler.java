@@ -4,6 +4,7 @@ import com.gomdolbook.api.application.shared.ApiErrorResponse;
 import com.gomdolbook.api.domain.shared.BookNotFoundException;
 import com.gomdolbook.api.domain.shared.BookNotInCollectionException;
 import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
+import com.gomdolbook.api.domain.shared.InvalidStarValueException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 @ControllerAdvice
 @Slf4j
@@ -141,6 +143,22 @@ public class CustomExceptionHandler {
 
     @ExceptionHandler({BookNotInCollectionException.class})
     public ResponseEntity<Object> handleCollectionNotFound(BookNotInCollectionException ex, WebRequest request) {
+        String error = ex.getMessage();
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(HttpStatus.BAD_REQUEST, error);
+        return new ResponseEntity<>(apiErrorResponse, new HttpHeaders(),
+            apiErrorResponse.getStatus());
+    }
+
+    @ExceptionHandler({InvalidStarValueException.class})
+    public ResponseEntity<Object> handleCollectionNotFound(InvalidStarValueException ex, WebRequest request) {
+        String error = ex.getMessage();
+        ApiErrorResponse apiErrorResponse = new ApiErrorResponse(HttpStatus.BAD_REQUEST, error);
+        return new ResponseEntity<>(apiErrorResponse, new HttpHeaders(),
+            apiErrorResponse.getStatus());
+    }
+
+    @ExceptionHandler({ResponseStatusException.class})
+    public ResponseEntity<Object> handleCollectionNotFound(ResponseStatusException ex, WebRequest request) {
         String error = ex.getMessage();
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(HttpStatus.BAD_REQUEST, error);
         return new ResponseEntity<>(apiErrorResponse, new HttpHeaders(),
