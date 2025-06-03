@@ -151,46 +151,6 @@ public class BookApplicationService {
                     retrySignal -> log.info("[retry] {}", retrySignal.toString())));
     }
 
-    /*
-    * @deprecated BookMeta 도입 이전 도서 저장 로직. registerBookWithMeta()를 사용하세요.
-    */
-    @Deprecated(since = "1.0.1")
-    @Caching(evict = {
-        @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#command.isbn())"),
-        @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey(#command.status())"),
-        @CacheEvict(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()")
-    })
-    @UserCheckAndSave
-    @Transactional
-    public Book saveBook(BookSaveCommand command) {
-        User user = userApplicationService.find(securityService.getUserEmailFromSecurityContext())
-            .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
-        Book book = createBookWithReadingLog(command, user);
-        if (command.status().equals("READING") ) {
-            ZonedDateTime kst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
-            book.changeStartedAt(kst.toLocalDateTime());
-        } else if (command.status().equals("FINISHED")) {
-            ZonedDateTime kst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
-            book.changeFinishedAt(kst.toLocalDateTime());
-        }
-        return bookRepository.save(book);
-    }
-
-    @Deprecated(since = "1.0.1")
-    private Book createBookWithReadingLog(BookSaveCommand command, User user) {
-        Book book = Book.of(command);
-        ReadingLog readingLog = setDefaultReadingLog(command, user);
-        book.setReadingLog(readingLog);
-        return book;
-    }
-
-    @Deprecated(since = "1.0.1")
-    private ReadingLog setDefaultReadingLog(BookSaveCommand command, User user) {
-        String status = (command.status() == null || command.status().isBlank()) ? "NEW"
-            : command.status();
-        return ReadingLog.of(user, validateAndConvertStatus(status));
-    }
-
     @Caching(evict = {
         @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#command.isbn())"),
         @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey(#command.status())"),
