@@ -19,8 +19,8 @@ public class CollectionData {
     }
 
     public void addBookCover(Book book) {
-        if (!booksCover.contains(book.getCover())) {
-            booksCover.add(book.getCover());
+        if (!booksCover.contains(book.getBookMeta().getCover())) {
+            booksCover.add(book.getBookMeta().getCover());
         }
     }
 }
