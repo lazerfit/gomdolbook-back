@@ -26,6 +26,20 @@ spring:
         jwt:
           issuer-uri: http://localhost:8081/realms/gomdolbook
           audiences: gomdolbook
+  boot:
+    admin:
+      client:
+        instance:
+          name: gomdolbook
+          service-url: http://localhost:8080/api
+          metadata:
+            user:
+              name: ${ADMIN_SERVER_USERNAME}
+              password: ${ADMIN_SERVER_PASSWORD}
+        url: http://localhost:8090
+        auto-registration: true
+        username: ${ADMIN_SERVER_USERNAME}
+        password: ${ADMIN_SERVER_PASSWORD}
 api:
   aladin:
     baseUrl: http://www.aladin.co.kr/ttb/api/
@@ -37,3 +51,14 @@ oauth:
   github:
     clientId: ${GITHUB_ID}
     clientSecret: ${GITHUB_SECRET}
+management:
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

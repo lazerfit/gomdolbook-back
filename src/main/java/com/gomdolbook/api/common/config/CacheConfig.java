@@ -25,7 +25,8 @@ public class CacheConfig {
         return Caffeine.newBuilder()
             .expireAfterWrite(60, TimeUnit.MINUTES)
             .initialCapacity(100)
-            .maximumSize(10_000);
+            .maximumSize(10_000)
+            .recordStats();
     }
 
     @Bean
@@ -34,6 +35,7 @@ public class CacheConfig {
             .expireAfterWrite(2, TimeUnit.HOURS)
             .initialCapacity(100)
             .maximumSize(10_000)
+            .recordStats()
             .buildAsync();
     }
 
