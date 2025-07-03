@@ -36,6 +36,7 @@ spring:
             user:
               name: ${ADMIN_SERVER_USERNAME}
               password: ${ADMIN_SERVER_PASSWORD}
+          management-url: http://localhost:9000/actuator
         url: http://localhost:8090
         auto-registration: true
         username: ${ADMIN_SERVER_USERNAME}
@@ -52,13 +53,18 @@ oauth:
     clientId: ${GITHUB_ID}
     clientSecret: ${GITHUB_SECRET}
 management:
+  server:
+    port: 9000
   info:
     env:
       enabled: true
   endpoints:
+    jmx:
+      exposure:
+        exclude: "*"
     web:
       exposure:
-        include: "*"
+        include: info, health, logfile, metrics
   endpoint:
     health:
       show-details: always
