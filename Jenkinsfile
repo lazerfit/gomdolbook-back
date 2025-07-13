@@ -17,7 +17,8 @@ pipeline {
                             usernamePassword(credentialsId: 'mariadb-root', usernameVariable: 'MARIADB_ROOT_USER', passwordVariable: 'MARIADB_ROOT_PASSWORD'),
                             usernamePassword(credentialsId: 'mariadb-gomdol', usernameVariable: 'MARIADB_USER', passwordVariable: 'MARIADB_PASSWORD'),
                             usernamePassword(credentialsId: 'jwt-token', usernameVariable: 'JWT_USER', passwordVariable: 'JWT_SECRET'),
-                            usernamePassword(credentialsId: 'aladin_ttbkey', usernameVariable: 'ALADIN_USER', passwordVariable: 'ALADIN_TTBKEY') // ← 쉼표 추가됨 ✅
+                            usernamePassword(credentialsId: 'aladin_ttbkey', usernameVariable: 'ALADIN_USER', passwordVariable: 'ALADIN_TTBKEY'),
+                            usernamePassword(credentialsId: 'management_admin', usernameVariable: 'USER_NAME', passwordVariable: 'APP_SECRET_PASSWORD')
                         ]) {
                             sh """#!/bin/bash
                                 set -e
@@ -37,6 +38,8 @@ pipeline {
                                 echo "MARIADB_PASSWORD=${MARIADB_PASSWORD}" >> .env
                                 echo "SPRING_JWT_SECRET=${JWT_SECRET}" >> .env
                                 echo "ALADIN_TTBKEY=${ALADIN_TTBKEY}" >> .env
+                                echo "SPRING_SECURITY_USER_NAME=${USER_NAME}" > .env
+                                echo "SPRING_SECURITY_USER_PASSWORD=${APP_SECRET_PASSWORD}" >> .env
                                 chmod 600 .env
 
                                 cat ${PROJECT_DIR}/.env
