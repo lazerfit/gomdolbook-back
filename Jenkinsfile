@@ -16,7 +16,7 @@ pipeline {
                             usernamePassword(credentialsId: 'kc_admin', usernameVariable: 'KC_ADMIN_USER', passwordVariable: 'KC_ADMIN_PASSWORD'),
                             usernamePassword(credentialsId: 'mariadb-root',usernameVariable: 'MARIADB_ROOT_USER', passwordVariable: 'MARIADB_ROOT_PASSWORD'),
                             usernamePassword(credentialsId: 'mariadb-gomdol', usernameVariable: 'MARIADB_USER', passwordVariable: 'MARIADB_PASSWORD'),
-                            usernamePassword(credentialsId: 'jwt-token', usernameVariable: 'JWT_USER' ,passwordVariable: 'JWT_SECRET')
+                            usernamePassword(credentialsId: 'jwt-token', usernameVariable: 'JWT_USER' ,passwordVariable: 'JWT_SECRET'),
                             usernamePassword(credentialsId: 'aladin_ttbkey', usernameVariable: 'ALADIN_USER' ,passwordVariable: 'ALADIN_TTBKEY')
                         ]) {
                             sh """#!/bin/bash
