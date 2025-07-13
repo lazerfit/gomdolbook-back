@@ -14,10 +14,10 @@ pipeline {
                     try {
                         withCredentials([
                             usernamePassword(credentialsId: 'kc_admin', usernameVariable: 'KC_ADMIN_USER', passwordVariable: 'KC_ADMIN_PASSWORD'),
-                            usernamePassword(credentialsId: 'mariadb-root',usernameVariable: 'MARIADB_ROOT_USER', passwordVariable: 'MARIADB_ROOT_PASSWORD'),
+                            usernamePassword(credentialsId: 'mariadb-root', usernameVariable: 'MARIADB_ROOT_USER', passwordVariable: 'MARIADB_ROOT_PASSWORD'),
                             usernamePassword(credentialsId: 'mariadb-gomdol', usernameVariable: 'MARIADB_USER', passwordVariable: 'MARIADB_PASSWORD'),
-                            usernamePassword(credentialsId: 'jwt-token', usernameVariable: 'JWT_USER' ,passwordVariable: 'JWT_SECRET'),
-                            usernamePassword(credentialsId: 'aladin_ttbkey', usernameVariable: 'ALADIN_USER' ,passwordVariable: 'ALADIN_TTBKEY')
+                            usernamePassword(credentialsId: 'jwt-token', usernameVariable: 'JWT_USER', passwordVariable: 'JWT_SECRET'),
+                            usernamePassword(credentialsId: 'aladin_ttbkey', usernameVariable: 'ALADIN_USER', passwordVariable: 'ALADIN_TTBKEY') // ← 쉼표 추가됨 ✅
                         ]) {
                             sh """#!/bin/bash
                                 set -e
@@ -36,7 +36,7 @@ pipeline {
                                 echo "MARIADB_USER=${MARIADB_USER}" >> .env
                                 echo "MARIADB_PASSWORD=${MARIADB_PASSWORD}" >> .env
                                 echo "SPRING_JWT_SECRET=${JWT_SECRET}" >> .env
-                                echo "ALADIN_TTBKEY"=${ALADIN_TTBKEY}" >> .env
+                                echo "ALADIN_TTBKEY=${ALADIN_TTBKEY}" >> .env
                                 chmod 600 .env
 
                                 docker compose build --no-cache
