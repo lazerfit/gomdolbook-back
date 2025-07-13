@@ -39,6 +39,8 @@ pipeline {
                                 echo "ALADIN_TTBKEY=${ALADIN_TTBKEY}" >> .env
                                 chmod 600 .env
 
+                                cat ${PROJECT_DIR}/.env
+
                                 docker compose build --no-cache
                                 docker compose up -d
                             """
