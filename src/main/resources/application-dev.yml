@@ -1,0 +1,70 @@
+server:
+  servlet:
+    context-path: /api
+spring:
+  application:
+    name: api
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      default_batch_fetch_size: 20
+      format_sql: true
+      ddl-auto: create
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+  sql:
+    init:
+      mode: never
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/gomdolbook
+          audiences: gomdolbook
+  boot:
+    admin:
+      client:
+        instance:
+          name: gomdolbook
+          service-url: http://localhost:8080/api
+          metadata:
+            user:
+              name: ${ADMIN_SERVER_USERNAME}
+              password: ${ADMIN_SERVER_PASSWORD}
+          management-url: http://localhost:9000/actuator
+        url: http://localhost:8090
+        auto-registration: true
+        username: ${ADMIN_SERVER_USERNAME}
+        password: ${ADMIN_SERVER_PASSWORD}
+api:
+  aladin:
+    baseUrl: http://www.aladin.co.kr/ttb/api/
+    ttbkey: ${ALADIN_TTB_KEY}
+jwt:
+  token:
+    secret: ${JWT_SECRET}
+oauth:
+  github:
+    clientId: ${GITHUB_ID}
+    clientSecret: ${GITHUB_SECRET}
+management:
+  server:
+    port: 9000
+  info:
+    env:
+      enabled: true
+  endpoints:
+    jmx:
+      exposure:
+        exclude: "*"
+    web:
+      exposure:
+        include: info, health, logfile, metrics
+  endpoint:
+    health:
+      show-details: always
