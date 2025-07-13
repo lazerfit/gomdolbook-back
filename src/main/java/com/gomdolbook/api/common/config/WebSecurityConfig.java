@@ -33,6 +33,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/actuator/**")
                 .access((auth, context) ->
                     new AuthorizationDecision(
+                        new IpAddressMatcher("172.18.0.0/16").matches(context.getRequest()) ||
                         new IpAddressMatcher("::1").matches(context.getRequest()) ||
                             new IpAddressMatcher("127.0.0.1").matches(context.getRequest())
                     ))
