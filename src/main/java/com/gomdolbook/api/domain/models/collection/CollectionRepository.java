@@ -8,4 +8,7 @@ public interface CollectionRepository extends JpaRepository<Collection, Long> {
 
     @Query("select uc from Collection uc where uc.name = :name and uc.user.email = :email")
     Optional<Collection> find(String name, String email);
+
+    @Query("select c from Collection c where c.id = :id and c.user.email = :email")
+    Optional<Collection> findById(Long id, String email);
 }

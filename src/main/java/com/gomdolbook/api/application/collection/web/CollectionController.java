@@ -7,11 +7,11 @@ import com.gomdolbook.api.application.bookmetacollection.command.AddBookToCollec
 import com.gomdolbook.api.application.bookmetacollection.command.AddBookToCollectionHandler;
 import com.gomdolbook.api.application.bookmetacollection.command.RemoveBookFromCollectionCommand;
 import com.gomdolbook.api.application.bookmetacollection.command.RemoveBookFromCollectionHandler;
-import com.gomdolbook.api.application.bookmetacollection.dto.CollectionBookMetaData;
 import com.gomdolbook.api.application.collection.command.CollectionCreateCommand;
 import com.gomdolbook.api.application.collection.command.CollectionCreateHandler;
 import com.gomdolbook.api.application.collection.command.CollectionDeleteCommand;
 import com.gomdolbook.api.application.collection.command.CollectionDeleteHandler;
+import com.gomdolbook.api.application.collection.dto.CollectionDetailDTO;
 import com.gomdolbook.api.application.shared.ApiResponse;
 import java.net.URI;
 import java.util.List;
@@ -48,12 +48,12 @@ public class CollectionController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/v2/collections/{name}")
-    public ResponseEntity<ApiResponse<List<CollectionBookMetaData>>> getCollection(
-        @PathVariable String name) {
-        List<CollectionBookMetaData> collection = bookMetaCollectionApplicationService.getCollection(
-            name);
-        ApiResponse<List<CollectionBookMetaData>> response = new ApiResponse<>(collection);
+    @GetMapping("/v2/collections/{id}")
+    public ResponseEntity<ApiResponse<CollectionDetailDTO>> getCollection(
+        @PathVariable Long id) {
+        CollectionDetailDTO collection = bookMetaCollectionApplicationService.getCollection(
+            id);
+        ApiResponse<CollectionDetailDTO> response = new ApiResponse<>(collection);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -75,6 +75,12 @@ public class CollectionController {
         collectionDeleteHandler.handle(command);
         return ResponseEntity.ok().build();
     }
+
+//    @PatchMapping("/v2/collections/{name}")
+//    public ResponseEntity<Void> changeCollectionName(@RequestBody @Validated
+//    CollectionNameChangeCommand command) {
+//
+//    }
 
     @PostMapping("/v2/collections/{name}/book")
     public ResponseEntity<Void> addBookToCollection(

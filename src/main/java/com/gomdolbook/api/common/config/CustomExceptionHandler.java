@@ -1,6 +1,8 @@
 package com.gomdolbook.api.common.config;
 
 import com.gomdolbook.api.application.shared.ApiErrorResponse;
+import com.gomdolbook.api.application.shared.ErrorAPIResponse;
+import com.gomdolbook.api.domain.shared.BookDuplicatedInCollectionException;
 import com.gomdolbook.api.domain.shared.BookNotFoundException;
 import com.gomdolbook.api.domain.shared.BookNotInCollectionException;
 import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
@@ -163,5 +165,13 @@ public class CustomExceptionHandler {
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(HttpStatus.BAD_REQUEST, error);
         return new ResponseEntity<>(apiErrorResponse, new HttpHeaders(),
             apiErrorResponse.getStatus());
+    }
+
+    @ExceptionHandler({BookDuplicatedInCollectionException.class})
+    public ResponseEntity<Object> handleBookDuplicatedInCollection(BookDuplicatedInCollectionException ex, WebRequest request) {
+        ErrorAPIResponse ErrorResponse = new ErrorAPIResponse("DUPLICATED_IN_COLLECTION",
+            ex.getMessage());
+        return new ResponseEntity<>(ErrorResponse, new HttpHeaders(),
+            HttpStatus.BAD_REQUEST);
     }
 }

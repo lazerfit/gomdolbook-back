@@ -3,7 +3,7 @@ package com.gomdolbook.api.application.bookmetacollection;
 import com.gomdolbook.api.application.book.command.BookMetaSaveCommand;
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverData;
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverListData;
-import com.gomdolbook.api.application.bookmetacollection.dto.CollectionBookMetaData;
+import com.gomdolbook.api.application.collection.dto.CollectionDetailDTO;
 import com.gomdolbook.api.common.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.common.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
@@ -15,6 +15,7 @@ import com.gomdolbook.api.domain.models.collection.CollectionRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.domain.services.SecurityService;
+import com.gomdolbook.api.domain.shared.BookDuplicatedInCollectionException;
 import com.gomdolbook.api.domain.shared.BookNotFoundException;
 import com.gomdolbook.api.domain.shared.BookNotInCollectionException;
 import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
@@ -48,13 +49,13 @@ public class BookMetaCollectionApplicationService {
         return BookCollectionCoverListData.from(results);
     }
 
-    @Cacheable(cacheNames = "collectionCache", keyGenerator = "customKeyGenerator", unless = "#result.isEmpty()")
+    @Cacheable(cacheNames = "collectionCache", keyGenerator = "customKeyGenerator", unless = "#result.books.isEmpty()")
     @Transactional(readOnly = true)
-    public List<CollectionBookMetaData> getCollection(String name) {
-        collectionRepository.find(name, securityService.getUserEmailFromSecurityContext())
+    public CollectionDetailDTO getCollection(Long id) {
+        collectionRepository.findById(id, securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new CollectionNotFoundException("존재하지 않는 컬렉션입니다."));
         return bookMetaCollectionRepository.getCollectionData(
-            securityService.getUserEmailFromSecurityContext(), name);
+            securityService.getUserEmailFromSecurityContext(), id);
     }
 
     @CacheEvict(cacheNames = "collectionListCache", key = "@securityService.getUserEmailFromSecurityContext()")
@@ -64,7 +65,6 @@ public class BookMetaCollectionApplicationService {
         User user = userRepository.find(securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
         collectionRepository.save(Collection.of(user, name));
-        log.info(">>>>>>>>>>>>> createCollection called >>>>>>>>>>>");
     }
 
     @Caching(evict = {
@@ -94,7 +94,7 @@ public class BookMetaCollectionApplicationService {
         boolean exists = bookMetaCollectionRepository.existsByBookMetaAndCollection(user, collection,
             bookMeta);
         if (exists) {
-            throw new IllegalStateException("이미 등록된 책입니다");
+            throw new BookDuplicatedInCollectionException("이미 등록된 책입니다");
         }
         bookMetaCollectionRepository.save(BookMetaCollection.of(bookMeta, collection, user));
     }

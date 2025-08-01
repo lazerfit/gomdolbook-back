@@ -224,9 +224,10 @@ public class BookApplicationService {
 
     @Caching(evict = {
         @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#isbn)"),
-        @CacheEvict(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()", condition = "#status.equals('FINISHED')")
+        @CacheEvict(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()", condition = "#status.equals('FINISHED')"),
+        @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey('READING')"),
+        @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey(#status)", condition = "!#status.equals('READING')")
     })
-    @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#isbn)")
     @Transactional
     public void changeStatus(String isbn, String status) {
         ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,

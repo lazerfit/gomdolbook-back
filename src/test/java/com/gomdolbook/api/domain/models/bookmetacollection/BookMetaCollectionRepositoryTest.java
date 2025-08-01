@@ -1,10 +1,11 @@
 package com.gomdolbook.api.domain.models.bookmetacollection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.gomdolbook.api.application.book.command.BookMetaSaveCommand;
 import com.gomdolbook.api.application.bookmetacollection.BookMetaCollectionApplicationService;
-import com.gomdolbook.api.application.bookmetacollection.dto.CollectionBookMetaData;
+import com.gomdolbook.api.application.collection.dto.CollectionDetailDTO;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
 import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
@@ -13,6 +14,7 @@ import com.gomdolbook.api.domain.models.collection.CollectionRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.User.Role;
 import com.gomdolbook.api.domain.models.user.UserRepository;
+import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,10 +56,9 @@ class BookMetaCollectionRepositoryTest {
     }
 
     @Test
-    void findByEmailAndCollectionName_존재하지않는경우_빈리스트() {
-        List<CollectionBookMetaData> found = bookMetaCollectionRepository.getCollectionData(
-            "no@email.com", "없는컬렉션");
-        assertThat(found).isEmpty();
+    void findByEmailAndCollectionName_존재하지않는경우_Error() {
+        assertThatThrownBy(() -> bookMetaCollectionRepository.getCollectionData(
+            "no@email.com", Long.valueOf(1000))).isInstanceOf(CollectionNotFoundException.class);
     }
 
     @Test
@@ -76,9 +77,9 @@ class BookMetaCollectionRepositoryTest {
 
         bookMetaCollectionRepository.deleteById(saved.getId());
         bookMetaCollectionRepository.flush();
-        List<CollectionBookMetaData> found = bookMetaCollectionRepository.getCollectionData(
-            "del@email.com", "del컬렉션");
-        assertThat(found).isEmpty();
+        CollectionDetailDTO found = bookMetaCollectionRepository.getCollectionData(
+            "del@email.com", collection.getId());
+        assertThat(found.books()).isEmpty();
 
         assertThat(bookMetaRepository.findById(bookMeta.getId())).isPresent();
         assertThat(collectionRepository.findById(collection.getId())).isPresent();
