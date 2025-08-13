@@ -7,10 +7,7 @@ import static com.gomdolbook.api.domain.models.collection.QCollection.collection
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverData;
 import com.gomdolbook.api.application.book.dto.QBookCollectionCoverData;
 import com.gomdolbook.api.application.collection.dto.BookInfoInCollectionDTO;
-import com.gomdolbook.api.application.collection.dto.CollectionDetailDTO;
 import com.gomdolbook.api.application.collection.dto.QBookInfoInCollectionDTO;
-import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
-import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -35,18 +32,8 @@ public class BookMetaCollectionRepositoryImpl implements BookMetaCollectionRepos
     }
 
     @Override
-    public  CollectionDetailDTO getCollectionData(String email, Long id) {
-        Tuple collectionData = factory
-            .select(collection.id, collection.name)
-            .from(collection)
-            .where(collection.id.eq(id), collection.user.email.eq(email))
-            .fetchOne();
-
-        if (collectionData == null) {
-            throw new CollectionNotFoundException("해당 컬렉션을 찾을 수 없습니다.");
-        }
-
-        List<BookInfoInCollectionDTO> bookInfo = factory
+    public  List<BookInfoInCollectionDTO> getCollectionData(String email, Long id) {
+        return factory
             .select(
                 new QBookInfoInCollectionDTO(bookMeta.title, bookMeta.cover, bookMeta.isbn)
             )
@@ -56,9 +43,6 @@ public class BookMetaCollectionRepositoryImpl implements BookMetaCollectionRepos
             .where(collection.id.eq(id))
             .where(collection.user.email.eq(email))
             .fetch();
-
-        return new CollectionDetailDTO(collectionData.get(collection.id),
-            collectionData.get(collection.name), bookInfo);
     }
 
     @Override

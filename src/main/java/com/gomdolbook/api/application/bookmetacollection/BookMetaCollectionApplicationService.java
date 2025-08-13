@@ -1,11 +1,7 @@
 package com.gomdolbook.api.application.bookmetacollection;
 
 import com.gomdolbook.api.application.book.command.BookMetaSaveCommand;
-import com.gomdolbook.api.application.book.dto.BookCollectionCoverData;
-import com.gomdolbook.api.application.book.dto.BookCollectionCoverListData;
-import com.gomdolbook.api.application.collection.dto.CollectionDetailDTO;
 import com.gomdolbook.api.common.config.annotations.PreAuthorizeWithContainsUser;
-import com.gomdolbook.api.common.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
 import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
 import com.gomdolbook.api.domain.models.bookmetacollection.BookMetaCollection;
@@ -19,12 +15,10 @@ import com.gomdolbook.api.domain.shared.BookDuplicatedInCollectionException;
 import com.gomdolbook.api.domain.shared.BookNotFoundException;
 import com.gomdolbook.api.domain.shared.BookNotInCollectionException;
 import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
-import com.gomdolbook.api.domain.shared.UserValidationError;
-import java.util.List;
+import com.gomdolbook.api.domain.shared.UserValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,57 +35,20 @@ public class BookMetaCollectionApplicationService {
     private final SecurityService securityService;
     private final BookMetaRepository bookMetaRepository;
 
-    @Cacheable(cacheNames = "collectionListCache", key = "@securityService.getUserEmailFromSecurityContext()", unless = "#result.isEmpty()")
-    @Transactional(readOnly = true)
-    public List<BookCollectionCoverListData> getCollectionList() {
-        List<BookCollectionCoverData> results = bookMetaCollectionRepository.getAllCollection(
-            securityService.getUserEmailFromSecurityContext());
-        return BookCollectionCoverListData.from(results);
-    }
-
-    @Cacheable(cacheNames = "collectionCache", keyGenerator = "customKeyGenerator", unless = "#result.books.isEmpty()")
-    @Transactional(readOnly = true)
-    public CollectionDetailDTO getCollection(Long id) {
-        collectionRepository.findById(id, securityService.getUserEmailFromSecurityContext())
-            .orElseThrow(() -> new CollectionNotFoundException("존재하지 않는 컬렉션입니다."));
-        return bookMetaCollectionRepository.getCollectionData(
-            securityService.getUserEmailFromSecurityContext(), id);
-    }
-
-    @CacheEvict(cacheNames = "collectionListCache", key = "@securityService.getUserEmailFromSecurityContext()")
-    @UserCheckAndSave
-    @Transactional
-    public void createCollection(String name) {
-        User user = userRepository.find(securityService.getUserEmailFromSecurityContext())
-            .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
-        collectionRepository.save(Collection.of(user, name));
-    }
-
     @Caching(evict = {
-        @CacheEvict(cacheNames = "collectionCache", key = "@securityService.getCacheKey(#name)"),
+        @CacheEvict(cacheNames = "collectionCache", key = "@securityService.getCacheKey(#id)"),
         @CacheEvict(cacheNames = "collectionListCache", key = "@securityService.getUserEmailFromSecurityContext()")
     })
     @Transactional
-    public void deleteCollection(String name) {
-        Collection collection = collectionRepository.find(name,
-                securityService.getUserEmailFromSecurityContext())
-            .orElseThrow(() -> new CollectionNotFoundException("해당 컬렉션을 찾을 수 없습니다."));
-        collectionRepository.delete(collection);
-    }
-
-    @Caching(evict = {
-        @CacheEvict(cacheNames = "collectionCache", key = "@securityService.getCacheKey(#collectionName)"),
-        @CacheEvict(cacheNames = "collectionListCache", key = "@securityService.getUserEmailFromSecurityContext()")
-    })
-    @Transactional
-    public void addBookToCollection(BookMetaSaveCommand command, String collectionName) {
+    public void addBookToCollection(BookMetaSaveCommand command, Long id) {
         String email = securityService.getUserEmailFromSecurityContext();
-        User user = getCurrentUser();
-        Collection collection = getCollectionByNameAndUser(collectionName, email);
+        User user = getCurrentUser(email);
+        Collection collection = collectionRepository.findByIdAndEmail(id, email)
+            .orElseThrow(() -> new CollectionNotFoundException("해당 컬렉션을 찾을 수 없습니다."));
         BookMeta bookMeta = bookMetaRepository.findByIsbn(command.isbn())
             .orElseGet(() -> bookMetaRepository.save(BookMeta.of(command)));
 
-        boolean exists = bookMetaCollectionRepository.existsByBookMetaAndCollection(user, collection,
+        boolean exists = bookMetaCollectionRepository.isExistsByBookMetaAndCollection(user, collection,
             bookMeta);
         if (exists) {
             throw new BookDuplicatedInCollectionException("이미 등록된 책입니다");
@@ -100,15 +57,16 @@ public class BookMetaCollectionApplicationService {
     }
 
     @Caching(evict = {
-        @CacheEvict(cacheNames = "collectionCache", key = "@securityService.getCacheKey(#collectionName)"),
+        @CacheEvict(cacheNames = "collectionCache", key = "@securityService.getCacheKey(#id)"),
         @CacheEvict(cacheNames = "collectionListCache", key = "@securityService.getUserEmailFromSecurityContext()")
     })
     @Transactional
-    public void removeBookFromCollection(String isbn, String collectionName) {
+    public void removeBookFromCollection(String isbn, Long id) {
         String email = securityService.getUserEmailFromSecurityContext();
-        User user = getCurrentUser();
+        User user = getCurrentUser(email);
         BookMeta bookMeta = getBookMetaByIsbn(isbn);
-        Collection collection = getCollectionByNameAndUser(collectionName, email);
+        Collection collection = collectionRepository.findByIdAndEmail(id, user.getEmail())
+            .orElseThrow(() -> new CollectionNotFoundException("해당 컬렉션을 찾을 수 없습니다."));
 
         BookMetaCollection bookMetaCollection = bookMetaCollectionRepository.findByUserAndBookMetaAndCollection(
                 user, bookMeta, collection)
@@ -118,20 +76,14 @@ public class BookMetaCollectionApplicationService {
         collection.getBookMetaCollections().remove(bookMetaCollection);
     }
 
-    private User getCurrentUser() {
-        String email = securityService.getUserEmailFromSecurityContext();
+    private User getCurrentUser(String email) {
         return userRepository.find(email)
-            .orElseThrow(() -> new UserValidationError("해당 유저를 찾을 수 없습니다: " + email));
+            .orElseThrow(() -> new UserValidationException("해당 유저를 찾을 수 없습니다: " + email));
     }
 
     private BookMeta getBookMetaByIsbn(String isbn) {
         return bookMetaRepository.findByIsbn(isbn)
             .orElseThrow(() -> new BookNotFoundException("책을 찾을 수 없습니다: " + isbn));
-    }
-
-    private Collection getCollectionByNameAndUser(String collectionName, String email) {
-        return collectionRepository.find(collectionName, email)
-            .orElseThrow(() -> new CollectionNotFoundException("컬렉션을 찾을 수 없습니다: " + collectionName));
     }
 
     @Transactional(readOnly = true)

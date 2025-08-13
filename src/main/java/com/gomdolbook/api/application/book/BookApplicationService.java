@@ -2,9 +2,7 @@ package com.gomdolbook.api.application.book;
 
 import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.gomdolbook.api.application.book.command.BookSaveCommand;
-import com.gomdolbook.api.application.book.command.ReadingLogUpdateCommand;
 import com.gomdolbook.api.application.book.dto.AladinResponseData;
-import com.gomdolbook.api.application.book.dto.BookAndReadingLogData;
 import com.gomdolbook.api.application.book.dto.BookData;
 import com.gomdolbook.api.application.book.dto.BookListData;
 import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
@@ -14,24 +12,21 @@ import com.gomdolbook.api.application.user.UserApplicationService;
 import com.gomdolbook.api.common.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.common.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.domain.models.book.Book;
+import com.gomdolbook.api.domain.models.book.Book.Status;
 import com.gomdolbook.api.domain.models.book.BookRepository;
 import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
 import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
-import com.gomdolbook.api.domain.models.readinglog.ReadingLog;
-import com.gomdolbook.api.domain.models.readinglog.ReadingLog.Status;
-import com.gomdolbook.api.domain.models.readinglog.ReadingLogRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.services.SecurityService;
 import com.gomdolbook.api.domain.shared.BookNotFoundException;
-import com.gomdolbook.api.domain.shared.UserValidationError;
+import com.gomdolbook.api.domain.shared.UserValidationException;
 import java.net.URI;
 import java.time.Duration;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,34 +54,11 @@ public class BookApplicationService {
     private final BookMetaRepository bookMetaRepository;
     private final UserApplicationService userApplicationService;
     private final WebClient webClient;
-    private final ReadingLogRepository readingLogRepository;
     private final SecurityService securityService;
-    private final AsyncCache<String, AladinResponseData> aladinAPIAsyncCache;
+    private final AsyncCache<@NonNull String, AladinResponseData> aladinAPIAsyncCache;
 
     @Value("${api.aladin.ttbkey}")
     private String ttbkey;
-
-    @Cacheable(cacheNames = "readingLogCache", keyGenerator = "customKeyGenerator", unless = "#result == null")
-    @UserCheckAndSave
-    @Transactional(readOnly = true)
-    public BookAndReadingLogData getReadingLog(String isbn) {
-        return bookRepository.findByEmail(
-                securityService.getUserEmailFromSecurityContext(), isbn)
-            .orElseThrow(() -> new BookNotFoundException(isbn));
-    }  
-
-    @Cacheable(cacheNames = "statusCache", keyGenerator = "customKeyGenerator", unless = "#result == null")
-    @Transactional(readOnly = true)
-    public StatusData getStatus(String isbn) {
-        Optional<Status> status = bookRepository.getStatus(isbn, securityService.getUserEmailFromSecurityContext());
-        return StatusData.of(status.map(Enum::name).orElse("EMPTY"));
-    }
-
-    @Cacheable(cacheNames = "bookByIsbnCache", key = "#isbn", unless = "#result == null")
-    @Transactional(readOnly = true)
-    public Optional<Book> find(String isbn) {
-        return bookRepository.findByIsbn(isbn);
-    }
 
     public Mono<BookData> fetchItemFromAladin(String isbn) {
         return getAladinData(isbn,"ItemLookUp.aspx", uriBuilder -> uriBuilder
@@ -156,38 +128,14 @@ public class BookApplicationService {
     })
     @UserCheckAndSave
     @Transactional
-    public Book registerBookWithMeta(BookSaveCommand command) {
+    public void addBookToLibrary(BookSaveCommand command) {
         User user = userApplicationService.find(securityService.getUserEmailFromSecurityContext())
-            .orElseThrow(() -> new UserValidationError("등록된 사용자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new UserValidationException("등록된 사용자를 찾을 수 없습니다."));
         BookMeta bookMeta = bookMetaRepository.findByIsbn(command.isbn())
             .orElseGet(() -> bookMetaRepository.save(BookMeta.of(command)));
-        Book book = createBookWithReadingLog(bookMeta, command.status(), user);
-        setBookReadingPeriodByStatus(book, command.status());
-        return bookRepository.save(book);
-    }
-
-    private Book createBookWithReadingLog(BookMeta bookMeta, String status,  User user) {
-        Book book = Book.of(bookMeta);
-        ReadingLog readingLog = setDefaultReadingLog(status, user);
-        book.setReadingLog(readingLog);
-        return book;
-    }
-
-    private ReadingLog setDefaultReadingLog(String initialStatus, User user) {
-        String status = (initialStatus == null || initialStatus.isBlank()) ? "NEW"
-            : initialStatus;
-        return ReadingLog.of(user, validateAndConvertStatus(status));
-    }
-
-    private void setBookReadingPeriodByStatus(Book book, String status) {
-        if (status == null) return;
-        if (status.equals("READING") ) {
-            ZonedDateTime kst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
-            book.changeStartedAt(kst.toLocalDateTime());
-        } else if (status.equals("FINISHED")) {
-            ZonedDateTime kst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
-            book.changeFinishedAt(kst.toLocalDateTime());
-        }
+        Book book = Book.of(bookMeta, user);
+        book.changeStatus(validateAndConvertStatus(command.status()));
+        bookRepository.save(book);
     }
 
     private Status validateAndConvertStatus(String statusString)
@@ -202,54 +150,35 @@ public class BookApplicationService {
     @Cacheable(cacheNames = "libraryCache", keyGenerator = "customKeyGenerator", unless = "#result.isEmpty()")
     @Transactional
     public List<BookListData> getLibrary(String status) {
-        return bookRepository.findByStatus(validateAndConvertStatus(status),
+        return bookRepository.findLibraryByStatus(validateAndConvertStatus(status),
             securityService.getUserEmailFromSecurityContext());
     }
 
-    @CacheEvict(cacheNames = "readingLogCache", key = "@securityService.getCacheKey(#command.isbn())")
+    @Cacheable(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()", unless = "#result.isEmpty()")
     @Transactional
-    public void changeReadingLog(ReadingLogUpdateCommand command) {
-        Book book = bookRepository.findByIsbn(command.isbn())
-            .orElseThrow(() -> new BookNotFoundException("Cannot find book: " + command.isbn()));
-
-        ReadingLog readingLog = book.getReadingLog();
-
-        switch (command.note()) {
-            case "note1"-> readingLog.changeNote1(command.text());
-            case "note2" -> readingLog.changeNote2(command.text());
-            case "note3"-> readingLog.changeNote3(command.text());
-            default -> throw new IllegalArgumentException("Invalid note: " + command.note());
-        }
+    public List<FinishedBookCalendarData> getFinishedBookCalendarData() {
+        return bookRepository.findFinishedBookCalendarData(securityService.getUserEmailFromSecurityContext());
     }
 
     @Caching(evict = {
-        @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#isbn)"),
+        @CacheEvict(cacheNames = {"statusCache","readingLogCache"}, key = "@securityService.getCacheKey(#isbn)"),
         @CacheEvict(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()", condition = "#status.equals('FINISHED')"),
         @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey('READING')"),
         @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey(#status)", condition = "!#status.equals('READING')")
     })
     @Transactional
     public void changeStatus(String isbn, String status) {
-        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,
+        Book book = bookRepository.findByIsbn(isbn,
                 securityService.getUserEmailFromSecurityContext())
             .orElseThrow(() -> new BookNotFoundException("can't not find book: " + isbn));
-
-        readingLog.changeStatus(validateAndConvertStatus(status));
+        if (book.getStatus().toString().equals(status.toUpperCase())) return;
+        book.changeStatus(validateAndConvertStatus(status));
     }
 
-    @CacheEvict(cacheNames = "readingLogCache", key = "@securityService.getCacheKey(#isbn)")
-    @Transactional
-    public void changeRating(int rating, String isbn) {
-        ReadingLog readingLog = readingLogRepository.findByIsbnAndEmail(isbn,
-                securityService.getUserEmailFromSecurityContext())
-            .orElseThrow(() -> new BookNotFoundException("can't find book: " + isbn));
-
-        readingLog.changeRating(rating);
-    }
-
-    @Cacheable(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()", unless = "#result.isEmpty()")
-    @Transactional
-    public List<FinishedBookCalendarData> getFinishedBookCalendarData() {
-        return bookRepository.getFinishedBookCalendarData(securityService.getUserEmailFromSecurityContext());
+    @Cacheable(cacheNames = "statusCache", keyGenerator = "customKeyGenerator", unless = "#result == null")
+    @Transactional(readOnly = true)
+    public StatusData getStatus(String isbn) {
+        Optional<Status> status = bookRepository.findStatus(isbn, securityService.getUserEmailFromSecurityContext());
+        return StatusData.of(status.map(Enum::name).orElse("EMPTY"));
     }
 }

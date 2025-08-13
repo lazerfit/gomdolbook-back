@@ -12,6 +12,6 @@ public class BookSaveHandler implements CommandHandler<BookSaveCommand> {
     private final BookApplicationService bookService;
 
     public void handle(BookSaveCommand command) {
-        bookService.registerBookWithMeta(command);
+        bookService.addBookToLibrary(command);
     }
 }

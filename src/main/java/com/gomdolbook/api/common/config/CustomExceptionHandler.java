@@ -7,6 +7,7 @@ import com.gomdolbook.api.domain.shared.BookNotFoundException;
 import com.gomdolbook.api.domain.shared.BookNotInCollectionException;
 import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
 import com.gomdolbook.api.domain.shared.InvalidStarValueException;
+import com.gomdolbook.api.domain.shared.UserValidationException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import java.util.ArrayList;
@@ -122,7 +123,7 @@ public class CustomExceptionHandler {
         return new ResponseEntity<>(apiErrorResponse, new HttpHeaders(), apiErrorResponse.getStatus());
     }
 
-    @ExceptionHandler({AuthorizationDeniedException.class})
+    @ExceptionHandler({AuthorizationDeniedException.class, UserValidationException.class})
     public ResponseEntity<Object> handleAuthorizationDeniedException(Exception ex,
         WebRequest request) {
         ApiErrorResponse apiErrorResponse = new ApiErrorResponse(HttpStatus.FORBIDDEN, "Access Denied");
@@ -169,9 +170,9 @@ public class CustomExceptionHandler {
 
     @ExceptionHandler({BookDuplicatedInCollectionException.class})
     public ResponseEntity<Object> handleBookDuplicatedInCollection(BookDuplicatedInCollectionException ex, WebRequest request) {
-        ErrorAPIResponse ErrorResponse = new ErrorAPIResponse("DUPLICATED_IN_COLLECTION",
+        ErrorAPIResponse errorResponse = new ErrorAPIResponse("DUPLICATED_IN_COLLECTION",
             ex.getMessage());
-        return new ResponseEntity<>(ErrorResponse, new HttpHeaders(),
+        return new ResponseEntity<>(errorResponse, new HttpHeaders(),
             HttpStatus.BAD_REQUEST);
     }
 }

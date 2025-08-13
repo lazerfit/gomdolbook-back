@@ -2,9 +2,12 @@ package com.gomdolbook.api.domain.models.book;
 
 import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
 import com.gomdolbook.api.domain.models.readinglog.ReadingLog;
+import com.gomdolbook.api.domain.models.user.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,10 +25,20 @@ import lombok.NoArgsConstructor;
 @Getter
 public class Book {
 
+    public enum Status {
+        TO_READ,
+        READING,
+        FINISHED,
+        NEW
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "BOOK_ID")
     private Long id;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
     @Column
     private LocalDateTime startedAt;
@@ -41,31 +54,57 @@ public class Book {
     @JoinColumn(name = "READINGLOG_ID")
     private ReadingLog readingLog;
 
-    public void setReadingLog(ReadingLog readingLog) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "USER_ID")
+    private User user;
+
+    private void setReadingLog(ReadingLog readingLog) {
         this.readingLog = readingLog;
         if (readingLog != null && readingLog.getBook() != this) {
             readingLog.setBook(this);
         }
     }
 
-    public void deleteReadingLog() {
-        this.readingLog = null;
+    private void setUser(User user) {
+        if (this.user != null) {
+            this.user.getBooks().remove(this);
+        }
+        this.user = user;
+        if (user != null && !user.getBooks().contains(this)) {
+            user.getBooks().add(this);
+        }
     }
 
-    public static Book of(BookMeta meta) {
-        Book book = new Book();
-        book.bookMeta = meta;
-        if (meta != null) {
-            meta.getBooks().add(book);
+    private void setBookMeta(BookMeta bookMeta) {
+        if (this.bookMeta != null) {
+            this.bookMeta.getBooks().remove(this);
         }
+        this.bookMeta = bookMeta;
+        if (bookMeta != null && !bookMeta.getBooks().contains(this)) {
+            bookMeta.getBooks().add(this);
+        }
+    }
+
+    public static Book of(BookMeta bookMeta, User user) {
+        Book book = new Book();
+        book.setBookMeta(bookMeta);
+        book.setUser(user);
+        ReadingLog readingLog = ReadingLog.of();
+        book.setReadingLog(readingLog);
+        book.status = Status.NEW;
         return book;
     }
 
-    public void changeStartedAt(LocalDateTime startedAt) {
-        this.startedAt = startedAt;
+    public void changeStatus(Status status) {
+        this.status = status;
+        if (status == Status.READING) {
+            startedAt = LocalDateTime.now();
+            finishedAt = null;
+        } else if (status == Status.FINISHED) {
+            if (startedAt == null) {
+                startedAt = LocalDateTime.now();
+            }
+            finishedAt = LocalDateTime.now();
+        }
     }
-    public void changeFinishedAt(LocalDateTime finishedAt) {
-        this.finishedAt = finishedAt;
-    }
-
 }

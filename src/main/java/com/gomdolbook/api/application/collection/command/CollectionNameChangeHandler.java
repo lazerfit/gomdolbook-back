@@ -13,6 +13,6 @@ public class CollectionNameChangeHandler implements CommandHandler<CollectionNam
 
     @Override
     public void handle(CollectionNameChangeCommand command) {
-
+        service.changeCollectionName(command.id(), command.name());
     }
 }

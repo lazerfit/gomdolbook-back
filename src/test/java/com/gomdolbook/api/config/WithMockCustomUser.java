@@ -12,6 +12,6 @@ import org.springframework.security.test.context.support.WithSecurityContext;
 public @interface WithMockCustomUser {
 
     String[] roles() default {"user"};
-    String email() default "redkafe@daum.net";
+    String email() default "test@email.com";
 
 }

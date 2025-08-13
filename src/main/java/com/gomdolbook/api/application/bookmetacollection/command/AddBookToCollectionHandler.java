@@ -13,6 +13,6 @@ public class AddBookToCollectionHandler implements CommandHandler<AddBookToColle
 
     @Override
     public void handle(AddBookToCollectionCommand command) {
-        service.addBookToCollection(command.bookMetaSaveCommand(), command.collectionName());
+        service.addBookToCollection(command.bookMetaSaveCommand(), command.id() );
     }
 }

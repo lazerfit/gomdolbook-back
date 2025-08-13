@@ -7,7 +7,7 @@ public record BookCollectionCoverListData
     (Long id, String name, List<String> covers) {
 
     public static List<BookCollectionCoverListData> from(List<BookCollectionCoverData> dtoList) {
-        record GroupingKey(Long id, String name) {};
+        record GroupingKey(Long id, String name) {}
 
         return dtoList.stream()
             .collect(Collectors.groupingBy(data -> new GroupingKey(data.id(),
