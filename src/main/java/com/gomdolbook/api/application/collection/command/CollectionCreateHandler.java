@@ -1,6 +1,6 @@
 package com.gomdolbook.api.application.collection.command;
 
-import com.gomdolbook.api.application.bookmetacollection.BookMetaCollectionApplicationService;
+import com.gomdolbook.api.application.collection.CollectionApplicationService;
 import com.gomdolbook.api.application.shared.CommandHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CollectionCreateHandler implements CommandHandler<CollectionCreateCommand> {
 
-    private final BookMetaCollectionApplicationService service;
+    private final CollectionApplicationService service;
 
     @Override
     public void handle(CollectionCreateCommand command) {

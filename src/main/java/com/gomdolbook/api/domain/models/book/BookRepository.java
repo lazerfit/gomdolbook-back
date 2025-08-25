@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 @DomainRepository
 public interface BookRepository extends JpaRepository<Book, Long>, BookRepositoryCustom {
 
-    @Query("select b from Book b join fetch BookMeta bm on b.bookMeta = bm where b.bookMeta.isbn = :isbn")
-    Optional<Book> findByIsbn(String isbn);
+    @Query("select b from Book b join fetch BookMeta bm on b.bookMeta = bm join User u on b.user.id = u.id where b.bookMeta.isbn = :isbn and b.user.email = :email")
+    Optional<Book> findByIsbn(String isbn, String email);
 }

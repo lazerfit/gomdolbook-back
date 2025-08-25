@@ -48,6 +48,10 @@ public class Collection {
         return c;
     }
 
+    public void changeName(String name) {
+        this.name = name;
+    }
+
     public void setUser(User user) {
         if (this.user != null) {
             this.user.getCollections().remove(this);

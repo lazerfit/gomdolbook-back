@@ -1,8 +1,8 @@
 package com.gomdolbook.api.domain.models.user;
 
+import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.bookmetacollection.BookMetaCollection;
 import com.gomdolbook.api.domain.models.collection.Collection;
-import com.gomdolbook.api.domain.models.readinglog.ReadingLog;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -44,7 +44,7 @@ public class User {
     private Role role;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private final List<ReadingLog> readingLogs = new ArrayList<>();
+    private final List<Book> books = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private final List<Collection> collections = new ArrayList<>();

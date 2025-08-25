@@ -1,4 +1,4 @@
-package com.gomdolbook.api.application.book.command;
+package com.gomdolbook.api.application.readingLog.command;
 
 import com.gomdolbook.api.application.book.BookApplicationService;
 import com.gomdolbook.api.application.shared.CommandHandler;

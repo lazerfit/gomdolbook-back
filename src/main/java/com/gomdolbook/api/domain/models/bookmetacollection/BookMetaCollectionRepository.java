@@ -14,7 +14,7 @@ public interface BookMetaCollectionRepository extends JpaRepository<BookMetaColl
     List<BookMetaCollection> findByUser(User user);
 
     @Query("select case when exists (select 1 from BookMetaCollection bmc where bmc.bookMeta = :bookMeta and bmc.user = :user and bmc.collection = :collection ) then true else false end")
-    boolean existsByBookMetaAndCollection(User user, Collection collection, BookMeta bookMeta);
+    boolean isExistsByBookMetaAndCollection(User user, Collection collection, BookMeta bookMeta);
 
     Optional<BookMetaCollection> findByUserAndBookMetaAndCollection(User user,BookMeta bookMeta, Collection collection);
 }

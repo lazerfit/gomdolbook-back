@@ -1,20 +1,22 @@
 package com.gomdolbook.api.application.book.dto;
 
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public record BookCollectionCoverListData
-    (String name, BookCoverData books) {
+    (Long id, String name, List<String> covers) {
 
     public static List<BookCollectionCoverListData> from(List<BookCollectionCoverData> dtoList) {
-        LinkedHashMap<String, BookCoverData> tempMap = new LinkedHashMap<>();
-        for (BookCollectionCoverData dto : dtoList) {
-            tempMap
-                .computeIfAbsent(dto.name(), k -> new BookCoverData())
-                .addCovers(dto.cover());
-        }
+        record GroupingKey(Long id, String name) {}
 
-        return tempMap.entrySet().stream()
-            .map(e -> new BookCollectionCoverListData(e.getKey(),e.getValue())).toList();
+        return dtoList.stream()
+            .collect(Collectors.groupingBy(data -> new GroupingKey(data.id(),
+                    data.name()),
+                Collectors.filtering(data -> data.cover() != null,
+                    Collectors.mapping(BookCollectionCoverData::cover, Collectors.toList()))))
+            .entrySet()
+            .stream()
+            .map(entry -> new BookCollectionCoverListData(entry.getKey()
+                .id(), entry.getKey().name(), entry.getValue())).toList();
     }
 }

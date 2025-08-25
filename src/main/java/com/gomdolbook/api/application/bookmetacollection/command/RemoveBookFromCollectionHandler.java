@@ -14,6 +14,6 @@ public class RemoveBookFromCollectionHandler implements
 
     @Override
     public void handle(RemoveBookFromCollectionCommand command) {
-        service.removeBookFromCollection(command.isbn(), command.collectionName());
+        service.removeBookFromCollection(command.isbn(), command.id());
     }
 }

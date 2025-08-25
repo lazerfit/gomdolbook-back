@@ -4,7 +4,7 @@ import com.gomdolbook.api.application.shared.Command;
 
 public record RemoveBookFromCollectionCommand(
     String isbn,
-    String collectionName
+    Long id
 ) implements Command {
 
 }

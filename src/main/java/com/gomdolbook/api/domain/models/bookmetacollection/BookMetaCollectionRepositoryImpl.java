@@ -6,8 +6,8 @@ import static com.gomdolbook.api.domain.models.collection.QCollection.collection
 
 import com.gomdolbook.api.application.book.dto.BookCollectionCoverData;
 import com.gomdolbook.api.application.book.dto.QBookCollectionCoverData;
-import com.gomdolbook.api.application.bookmetacollection.dto.CollectionBookMetaData;
-import com.gomdolbook.api.application.bookmetacollection.dto.QCollectionBookMetaData;
+import com.gomdolbook.api.application.collection.dto.BookInfoInCollectionDTO;
+import com.gomdolbook.api.application.collection.dto.QBookInfoInCollectionDTO;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class BookMetaCollectionRepositoryImpl implements BookMetaCollectionRepos
     @Override
     public List<BookCollectionCoverData> getAllCollection(String email) {
         return factory.select(
-                new QBookCollectionCoverData(collection.name, bookMeta.cover)
+                new QBookCollectionCoverData(collection.id,collection.name, bookMeta.cover)
             )
             .from(collection)
             .leftJoin(bookMetaCollection).on(collection.id.eq(bookMetaCollection.collection.id))
@@ -32,19 +32,16 @@ public class BookMetaCollectionRepositoryImpl implements BookMetaCollectionRepos
     }
 
     @Override
-    public List<CollectionBookMetaData> getCollectionData(String email, String collectionName) {
-        return factory.select(
-            new QCollectionBookMetaData(
-                bookMeta.cover,
-                bookMeta.title,
-                bookMeta.isbn
-            ))
+    public  List<BookInfoInCollectionDTO> getCollectionData(String email, Long id) {
+        return factory
+            .select(
+                new QBookInfoInCollectionDTO(bookMeta.title, bookMeta.cover, bookMeta.isbn)
+            )
             .from(collection)
-            .leftJoin(bookMetaCollection).on(collection.id.eq(bookMetaCollection.collection.id))
-            .leftJoin(bookMeta).on(bookMeta.id.eq(bookMetaCollection.bookMeta.id))
+            .join(bookMetaCollection).on(collection.id.eq(bookMetaCollection.collection.id))
+            .join(bookMeta).on(bookMeta.id.eq(bookMetaCollection.bookMeta.id))
+            .where(collection.id.eq(id))
             .where(collection.user.email.eq(email))
-            .where(collection.name.eq(collectionName))
-            .where(bookMetaCollection.isNotNull())
             .fetch();
     }
 

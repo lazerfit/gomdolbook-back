@@ -1,6 +1,6 @@
 package com.gomdolbook.api.common.aop;
 
-import com.gomdolbook.api.domain.shared.UserValidationError;
+import com.gomdolbook.api.domain.shared.UserValidationException;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.User.Role;
 import com.gomdolbook.api.domain.services.SecurityService;
@@ -30,7 +30,7 @@ public class EmailUserValidationAspect {
             }
         } catch (Exception e) {
             log.warn(e.getMessage());
-            throw new UserValidationError("user validation failed", e);
+            throw new UserValidationException("user validation failed", e);
         }
     }
 

@@ -5,7 +5,7 @@ import com.gomdolbook.api.application.shared.Command;
 
 public record AddBookToCollectionCommand(
     BookMetaSaveCommand bookMetaSaveCommand,
-    String collectionName
+    Long id
 ) implements Command {
 
 }

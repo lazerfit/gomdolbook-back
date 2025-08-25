@@ -1,6 +1,5 @@
 package com.gomdolbook.api.domain.services;
 
-import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +17,10 @@ public class SecurityService {
     }
 
     public String getCacheKey(String value) {
-        return getUserEmailFromSecurityContext() + ":" + Arrays.toString(new Object[]{value});
+        return getUserEmailFromSecurityContext() + ":" + value;
+    }
+
+    public String getCacheKey(Long value) {
+        return getUserEmailFromSecurityContext() + ":" + value;
     }
 }

@@ -1,12 +1,15 @@
 package com.gomdolbook.api.application.bookmetacollection;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.gomdolbook.api.application.book.command.BookMetaSaveCommand;
-import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
 import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
+import com.gomdolbook.api.domain.models.bookmetacollection.BookMetaCollection;
 import com.gomdolbook.api.domain.models.bookmetacollection.BookMetaCollectionRepository;
 import com.gomdolbook.api.domain.models.collection.Collection;
 import com.gomdolbook.api.domain.models.collection.CollectionRepository;
@@ -14,94 +17,155 @@ import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.User.Role;
 import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.domain.services.SecurityService;
+import com.gomdolbook.api.domain.shared.BookDuplicatedInCollectionException;
 import com.gomdolbook.api.domain.shared.BookNotFoundException;
-import jakarta.transaction.Transactional;
-import org.junit.jupiter.api.BeforeEach;
+import com.gomdolbook.api.domain.shared.BookNotInCollectionException;
+import com.gomdolbook.api.domain.shared.CollectionNotFoundException;
+import com.gomdolbook.api.domain.shared.UserValidationException;
+import java.util.Optional;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.annotation.Transactional;
 
-@WithMockCustomUser
 @Transactional
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class BookMetaCollectionApplicationServiceTest {
 
-    @Autowired
-    BookMetaCollectionApplicationService service;
-    @Autowired
+    @Mock
     BookMetaCollectionRepository bookMetaCollectionRepository;
-    @Autowired
-    BookMetaRepository bookMetaRepository;
-    @Autowired
+
+    @InjectMocks
+    BookMetaCollectionApplicationService bookMetaCollectionApplicationService;
+
+    @Mock
     CollectionRepository collectionRepository;
-    @Autowired
+
+    @Mock
+    BookMetaRepository bookMetaRepository;
+
+    @Mock
     UserRepository userRepository;
-    @Autowired
+
+    @Mock
     SecurityService securityService;
 
-    static User user;
+    private final String email = "test@email.com";
+    private final BookMeta bookMeta = BookMeta.builder().title("t").author("a").pubDate("p")
+        .description("d").isbn("i").cover("c").categoryName("ca").publisher("p").build();
 
-    @BeforeEach
-    void setUp() {
-        user = userRepository.save(new User("redkafe@daum.net", "img", Role.USER));
+    @Test
+    void addBookToCollection() {
+        User user = new User(email, "pic", Role.USER);
+        Collection mockCollection = Collection.of(user, "name");
+        BookMetaSaveCommand bookMetaSaveCommand = new BookMetaSaveCommand("t", "a", "p", "d", "i",
+            "c", "ca", "p");
+        when(securityService.getUserEmailFromSecurityContext()).thenReturn(email);
+        when(userRepository.find(email)).thenReturn(Optional.of(user));
+        when(collectionRepository.findByIdAndEmail(1L, email)).thenReturn(
+            Optional.of(mockCollection));
+        when(bookMetaRepository.findByIsbn("i")).thenReturn(Optional.of(bookMeta));
+        when(bookMetaCollectionRepository.isExistsByBookMetaAndCollection(user, mockCollection,
+            bookMeta)).thenReturn(false);
+
+        Assertions.assertDoesNotThrow(() -> bookMetaCollectionApplicationService.addBookToCollection(bookMetaSaveCommand, 1L));
+
+        verify(bookMetaCollectionRepository, times(1)).save(any(BookMetaCollection.class));
+        verify(collectionRepository, times(1)).findByIdAndEmail(1L, email);
     }
 
     @Test
-    void addBookToCollection_정상동작() {
-        collectionRepository.save(Collection.of(user, "내컬렉션"));
-        BookMetaSaveCommand command = new BookMetaSaveCommand("제목", "저자", "2025-01-01", "설명", "1234567890123", "cover", "카테고리", "출판사");
+    void addBookToCollection_AlreadyExistBookInCollection() {
+        User user = new User(email, "pic", Role.USER);
+        Collection mockCollection = Collection.of(user, "name");
+        BookMetaSaveCommand bookMetaSaveCommand = new BookMetaSaveCommand("t", "a", "p", "d", "i",
+            "c", "ca", "p");
+        when(securityService.getUserEmailFromSecurityContext()).thenReturn(email);
+        when(userRepository.find(email)).thenReturn(Optional.of(user));
+        when(collectionRepository.findByIdAndEmail(1L, email)).thenReturn(
+            Optional.of(mockCollection));
+        when(bookMetaRepository.findByIsbn("i")).thenReturn(Optional.of(bookMeta));
+        when(bookMetaCollectionRepository.isExistsByBookMetaAndCollection(user, mockCollection,
+            bookMeta)).thenReturn(true);
 
-        service.addBookToCollection(command, "내컬렉션");
-        assertThat(bookMetaCollectionRepository.findAll()).hasSize(1);
+        assertThatThrownBy(
+                () -> bookMetaCollectionApplicationService.addBookToCollection(bookMetaSaveCommand, 1L))
+            .isInstanceOf(BookDuplicatedInCollectionException.class);
     }
 
     @Test
-    void addBookToCollection_이미존재하는BookMeta_중복등록불가() {
-        collectionRepository.save(Collection.of(user, "내컬렉션"));
-        BookMetaSaveCommand command = new BookMetaSaveCommand("제목", "저자", "2025-01-01", "설명", "1234567890123", "cover", "카테고리", "출판사");
+    void removeBookFromCollection() {
+        User user = new User(email, "pic", Role.USER);
+        Collection mockCollection = Collection.of(user, "name");
+        when(securityService.getUserEmailFromSecurityContext()).thenReturn(email);
+        BookMetaCollection bookMetaCollection = BookMetaCollection.of(bookMeta, mockCollection,
+            user);
+        when(userRepository.find(email)).thenReturn(Optional.of(user));
+        when(collectionRepository.findByIdAndEmail(1L, email)).thenReturn(
+            Optional.of(mockCollection));
+        when(bookMetaRepository.findByIsbn("i")).thenReturn(Optional.of(bookMeta));
+        when(bookMetaCollectionRepository.findByUserAndBookMetaAndCollection(user, bookMeta,
+            mockCollection))
+            .thenReturn(Optional.of(bookMetaCollection));
 
-        service.addBookToCollection(command, "내컬렉션");
+        bookMetaCollectionApplicationService.removeBookFromCollection("i", 1L);
 
-        assertThrows(IllegalStateException.class, () -> service.addBookToCollection(command, "내컬렉션"));
+        verify(bookMetaCollectionRepository,times(1)).delete(bookMetaCollection);
     }
 
     @Test
-    void addBookToCollection_필수값누락_예외발생() {
-        BookMetaSaveCommand command = new BookMetaSaveCommand(null, "저자", "2025-01-01", "설명", "1234567890123", "cover", "카테고리", "출판사");
-        assertThrows(Exception.class, () -> service.addBookToCollection(command, "내컬렉션"));
+    void removeBookFromCollection_BookNotInCollection() {
+        User user = new User(email, "pic", Role.USER);
+        Collection mockCollection = Collection.of(user, "name");
+        when(securityService.getUserEmailFromSecurityContext()).thenReturn(email);
+        when(userRepository.find(email)).thenReturn(Optional.of(user));
+        when(collectionRepository.findByIdAndEmail(1L, email)).thenReturn(
+            Optional.of(mockCollection));
+        when(bookMetaRepository.findByIsbn("i")).thenReturn(Optional.of(bookMeta));
+        when(bookMetaCollectionRepository.findByUserAndBookMetaAndCollection(user, bookMeta,
+            mockCollection))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(
+            () -> bookMetaCollectionApplicationService.removeBookFromCollection("i", 1L))
+            .isInstanceOf(BookNotInCollectionException.class);
     }
 
     @Test
-    void removeBookFromCollection_존재하지않는책_예외() {
-        collectionRepository.save(Collection.of(user, "내컬렉션"));
-        assertThrows(BookNotFoundException.class, () -> service.removeBookFromCollection("9999999999999", "내컬렉션"));
+    void removeBookFromCollection_UserNotFound() {
+        when(securityService.getUserEmailFromSecurityContext()).thenReturn(email);
+        when(userRepository.find(email)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(
+            () -> bookMetaCollectionApplicationService.removeBookFromCollection("i", 1L))
+            .isInstanceOf(UserValidationException.class);
     }
 
     @Test
-    void removeBookFromCollection_정상삭제_연관관계정상() {
-        Collection collection = collectionRepository.save(Collection.of(user, "내컬렉션"));
-        BookMetaSaveCommand command = new BookMetaSaveCommand("제목", "저자",
-            "2025-01-01", "설명", "1234567890123", "cover", "카테고리", "출판사");
-        service.addBookToCollection(command, "내컬렉션");
+    void removeBookFromCollection_BookNotFound() {
+        User user = new User(email, "pic", Role.USER);
+        when(securityService.getUserEmailFromSecurityContext()).thenReturn(email);
+        when(userRepository.find(email)).thenReturn(Optional.of(user));
+        when(bookMetaRepository.findByIsbn("i")).thenReturn(Optional.empty());
 
-        service.removeBookFromCollection("1234567890123", "내컬렉션");
-
-        assertThat(bookMetaCollectionRepository.findAll()).isEmpty();
-        assertThat(collection.getBookMetaCollections()).isEmpty();
-        BookMeta meta = bookMetaRepository.findByIsbn("1234567890123").orElse(null);
-        assertThat(meta).isNotNull();
+        assertThatThrownBy(
+            () -> bookMetaCollectionApplicationService.removeBookFromCollection("i", 1L))
+            .isInstanceOf(BookNotFoundException.class);
     }
 
     @Test
-    void deleteCollection_컬렉션삭제시_BookMetaCollection_삭제_bookMeta_존재() {
-        Collection collection = collectionRepository.save(Collection.of(user, "내컬렉션"));
-        BookMetaSaveCommand command = new BookMetaSaveCommand("제목", "저자", "2025-01-01", "설명", "1234567890123", "cover", "카테고리", "출판사");
-        service.addBookToCollection(command, "내컬렉션");
+    void removeBookFromCollection_CollectionNotFound() {
+        User user = new User(email, "pic", Role.USER);
+        when(securityService.getUserEmailFromSecurityContext()).thenReturn(email);
+        when(userRepository.find(email)).thenReturn(Optional.of(user));
+        when(bookMetaRepository.findByIsbn("i")).thenReturn(Optional.of(bookMeta));
+        when(collectionRepository.findByIdAndEmail(1L, email)).thenReturn(Optional.empty());
 
-        service.deleteCollection("내컬렉션");
-
-        assertThat(bookMetaCollectionRepository.findAll()).isEmpty();
-        assertThat(collectionRepository.findById(collection.getId())).isNotPresent();
-        assertThat(bookMetaRepository.findByIsbn("1234567890123")).isPresent();
+        assertThatThrownBy(
+            () -> bookMetaCollectionApplicationService.removeBookFromCollection("i", 1L))
+            .isInstanceOf(CollectionNotFoundException.class);
     }
 }
