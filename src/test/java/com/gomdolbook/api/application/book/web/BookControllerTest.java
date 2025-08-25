@@ -15,6 +15,7 @@ import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.application.book.command.BookSaveHandler;
 import com.gomdolbook.api.application.book.dto.BookListData;
 import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
+import com.gomdolbook.api.application.book.dto.StatusData;
 import com.gomdolbook.api.application.readingLog.command.StatusUpdateHandler;
 import com.gomdolbook.api.config.WithMockCustomUser;
 import com.gomdolbook.api.domain.models.book.Book.Status;
@@ -106,6 +107,15 @@ class BookControllerTest {
                 .param("status", "READING")
                 .with(csrf()))
             .andExpect(status().isOk());
+    }
+
+    @Test
+    void getStatus() throws Exception {
+        given(bookApplicationService.getStatus("isbn")).willReturn(StatusData.of("READING"));
+
+        mockMvc.perform(get("/v1/book/status/{isbn}", "isbn"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("READING"));
     }
 
 }

@@ -10,11 +10,11 @@ public record CollectionsDTO(Long id, String name, List<String> covers) {
 
         return dtoList.stream()
             .collect(Collectors.groupingBy(data -> new GroupingKey(data.id(), data.name()),
-                Collectors.mapping(BookCoverDataInCollectionDTO::cover, Collectors.toList())))
+                Collectors.filtering(data -> data.cover() != null,
+                    Collectors.mapping(BookCoverDataInCollectionDTO::cover, Collectors.toList()))))
             .entrySet()
             .stream()
             .map(entry -> new CollectionsDTO(entry.getKey().id(), entry.getKey().name(),
                 entry.getValue())).toList();
-
     }
 }
