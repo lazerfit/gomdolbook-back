@@ -7,6 +7,7 @@ import com.gomdolbook.api.application.book.dto.BookData;
 import com.gomdolbook.api.application.book.dto.BookListData;
 import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
 import com.gomdolbook.api.application.book.dto.SearchedBookData;
+import com.gomdolbook.api.application.book.dto.StatusData;
 import com.gomdolbook.api.application.readingLog.command.StatusUpdateCommand;
 import com.gomdolbook.api.application.readingLog.command.StatusUpdateHandler;
 import com.gomdolbook.api.application.shared.ApiResponse;
@@ -74,10 +75,17 @@ public class BookController {
         return new ResponseEntity<>(responseDTO,HttpStatus.OK);
     }
 
-    @PatchMapping("/v1/book/status/{isbn}/status")
+    @PatchMapping("/v1/book/status/{isbn}")
     public ResponseEntity<Void> updateStatus(@RequestParam("status") String status, @PathVariable String isbn) {
         StatusUpdateCommand command = new StatusUpdateCommand(isbn, status);
         statusUpdateHandler.handle(command);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/v1/book/status/{isbn}")
+    public ResponseEntity<ApiResponse<StatusData>> getStatus(@PathVariable String isbn) {
+        StatusData status = bookApplicationService.getStatus(isbn);
+        new ApiResponse<>(status);
+        return new ResponseEntity<>(new ApiResponse<>(status),HttpStatus.OK);
     }
 }

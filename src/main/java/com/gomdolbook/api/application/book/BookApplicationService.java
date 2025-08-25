@@ -133,9 +133,13 @@ public class BookApplicationService {
             .orElseThrow(() -> new UserValidationException("등록된 사용자를 찾을 수 없습니다."));
         BookMeta bookMeta = bookMetaRepository.findByIsbn(command.isbn())
             .orElseGet(() -> bookMetaRepository.save(BookMeta.of(command)));
-        Book book = Book.of(bookMeta, user);
-        book.changeStatus(validateAndConvertStatus(command.status()));
-        bookRepository.save(book);
+        Optional<Book> bookOptional = bookRepository.findByUserAndBookMeta(user, bookMeta);
+        bookOptional.ifPresentOrElse(
+            book -> book.changeStatus(validateAndConvertStatus(command.status())), () -> {
+                Book book = Book.of(bookMeta, user);
+                book.changeStatus(validateAndConvertStatus(command.status()));
+                bookRepository.save(book);
+            });
     }
 
     private Status validateAndConvertStatus(String statusString)

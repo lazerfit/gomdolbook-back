@@ -119,4 +119,28 @@ class BookApplicationServiceIT {
         assertThatThrownBy(() -> bookApplicationService.changeStatus("invalid", "READING"))
             .isInstanceOf(BookNotFoundException.class);
     }
+
+    @Test
+    void getStatus() {
+        BookSaveCommand bookSaveCommand = new BookSaveCommand("t", "a", "p", "d", "i", "c", "ca",
+            "p", "FINISHED");
+        bookApplicationService.addBookToLibrary(bookSaveCommand);
+        em.flush();
+        em.clear();
+
+        StatusData status = bookApplicationService.getStatus("i");
+        assertThat(status.status()).isEqualTo("FINISHED");
+    }
+
+    @Test
+    void getStatus_invalid_shouldReturn_EMPTY() {
+        BookSaveCommand bookSaveCommand = new BookSaveCommand("t", "a", "p", "d", "i", "c", "ca",
+            "p", "FINISHED");
+        bookApplicationService.addBookToLibrary(bookSaveCommand);
+        em.flush();
+        em.clear();
+
+        StatusData status = bookApplicationService.getStatus("iiii");
+        assertThat(status.status()).isEqualTo("EMPTY");
+    }
 }

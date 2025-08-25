@@ -1,5 +1,6 @@
 package com.gomdolbook.api.application.book;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.gomdolbook.api.application.book.command.BookSaveCommand;
 import com.gomdolbook.api.application.book.dto.BookListData;
 import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
+import com.gomdolbook.api.application.book.dto.StatusData;
 import com.gomdolbook.api.application.user.UserApplicationService;
 import com.gomdolbook.api.domain.models.book.Book;
 import com.gomdolbook.api.domain.models.book.Book.Status;
@@ -16,7 +18,6 @@ import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
 import com.gomdolbook.api.domain.models.bookmeta.BookMetaRepository;
 import com.gomdolbook.api.domain.models.user.User;
 import com.gomdolbook.api.domain.models.user.User.Role;
-import com.gomdolbook.api.domain.models.user.UserRepository;
 import com.gomdolbook.api.domain.services.SecurityService;
 import java.time.LocalDate;
 import java.util.List;
@@ -35,9 +36,6 @@ class BookApplicationServiceTest {
 
     @Mock
     private BookRepository bookRepository;
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private UserApplicationService userApplicationService;
@@ -100,5 +98,29 @@ class BookApplicationServiceTest {
         bookApplicationService.changeStatus("i", "TO_READ");
 
         verify(bookRepository, times(1)).findByIsbn("i", email);
+    }
+
+    @Test
+    void getStatus() {
+        String isbn = "isbn";
+        when(securityService.getUserEmailFromSecurityContext()).thenReturn(email);
+        when(bookRepository.findStatus(isbn, email)).thenReturn(Optional.of(Status.READING));
+
+        StatusData status = bookApplicationService.getStatus(isbn);
+
+        assertThat(status.status()).isEqualTo("READING");
+        verify(bookRepository, times(1)).findStatus(isbn, email);
+    }
+
+    @Test
+    void getStatus_invalid_shouldReturn_EMPTY() {
+        String isbn = "isbn";
+        when(securityService.getUserEmailFromSecurityContext()).thenReturn(email);
+        when(bookRepository.findStatus(isbn, email)).thenReturn(Optional.empty());
+
+        StatusData status = bookApplicationService.getStatus(isbn);
+
+        assertThat(status.status()).isEqualTo("EMPTY");
+        verify(bookRepository, times(1)).findStatus(isbn, email);
     }
 }

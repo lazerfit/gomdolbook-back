@@ -103,15 +103,20 @@ class BookApplicationServiceCacheIT {
         when(bookRepository.findByIsbn("i", email))
             .thenReturn(Optional.of(
                 Book.of(BookMeta.of(bookSaveCommand), new User(email, "pic", Role.USER))));
+        when(bookRepository.findStatus("i", email)).thenReturn(Optional.of(Status.READING));
+
         bookApplicationService.getFinishedBookCalendarData();
         bookApplicationService.getLibrary("READING");
+        bookApplicationService.getStatus("i");
 
         bookApplicationService.changeStatus("i", "FINISHED");
         bookApplicationService.getFinishedBookCalendarData();
         bookApplicationService.getLibrary("READING");
+        bookApplicationService.getStatus("i");
 
         verify(bookRepository, times(2)).findFinishedBookCalendarData(email);
         verify(bookRepository, times(2)).findLibraryByStatus(Status.READING, email);
+        verify(bookRepository, times(2)).findStatus("i", email);
     }
 
     @Test
@@ -126,15 +131,30 @@ class BookApplicationServiceCacheIT {
         when(bookRepository.findByIsbn("i", email))
             .thenReturn(Optional.of(
                 Book.of(BookMeta.of(bookSaveCommand), new User(email, "pic", Role.USER))));
+        when(bookRepository.findStatus("i", email)).thenReturn(Optional.of(Status.READING));
+
         bookApplicationService.getFinishedBookCalendarData();
         bookApplicationService.getLibrary("READING");
+        bookApplicationService.getStatus("i");
 
         bookApplicationService.changeStatus("i", "TO_READ");
         bookApplicationService.getFinishedBookCalendarData();
         bookApplicationService.getLibrary("READING");
+        bookApplicationService.getStatus("i");
 
         verify(bookRepository, times(1)).findFinishedBookCalendarData(email);
         verify(bookRepository, times(2)).findLibraryByStatus(Status.READING, email);
+        verify(bookRepository, times(2)).findStatus("i", email);
+    }
+
+    @Test
+    void getStatus() {
+        when(bookRepository.findStatus("i", email)).thenReturn(Optional.of(Status.READING));
+
+        bookApplicationService.getStatus("i");
+        bookApplicationService.getStatus("i");
+
+        verify(bookRepository, times(1)).findStatus("i", email);
     }
 
     @Test

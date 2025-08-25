@@ -102,7 +102,7 @@ class BookControllerTest {
 
     @Test
     void updateStatus() throws Exception {
-        mockMvc.perform(patch("/v1/book/status/{isbn}/status", "isbn")
+        mockMvc.perform(patch("/v1/book/status/{isbn}", "isbn")
                 .param("status", "READING")
                 .with(csrf()))
             .andExpect(status().isOk());

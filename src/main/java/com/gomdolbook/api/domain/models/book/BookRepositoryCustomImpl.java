@@ -10,6 +10,10 @@ import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
 import com.gomdolbook.api.application.book.dto.QBookListData;
 import com.gomdolbook.api.application.book.dto.QFinishedBookCalendarData;
 import com.gomdolbook.api.domain.models.book.Book.Status;
+import com.gomdolbook.api.domain.models.bookmeta.BookMeta;
+import com.gomdolbook.api.domain.models.bookmeta.QBookMeta;
+import com.gomdolbook.api.domain.models.user.QUser;
+import com.gomdolbook.api.domain.models.user.User;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
@@ -55,4 +59,18 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom {
             .where(book.user.email.eq(email).and(book.status.eq(Status.FINISHED)))
             .fetch();
     }
+
+    @Override
+    public Optional<Book> findByUserAndBookMeta(User user, BookMeta bookMeta) {
+        Book result = queryFactory.select(book)
+            .from(book)
+            .join(book.user, QUser.user)
+            .join(book.bookMeta, QBookMeta.bookMeta)
+            .where(book.user.email.eq(user.getEmail()), book.bookMeta.id.eq(bookMeta.getId()))
+            .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+
 }
