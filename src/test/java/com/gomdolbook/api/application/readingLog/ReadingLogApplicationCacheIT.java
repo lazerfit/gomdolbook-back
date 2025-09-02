@@ -48,7 +48,7 @@ class ReadingLogApplicationCacheIT {
 
     private final String email = "test@email.com";
     ReadingLogWithBookDTO readingLogWithBookDTO = new ReadingLogWithBookDTO(1L, "title", "author", "cover",
-        "publisher", Status.READING,
+        "publisher",
         "summary", "note", 5,
         LocalDateTime.now(), LocalDateTime.now());
 

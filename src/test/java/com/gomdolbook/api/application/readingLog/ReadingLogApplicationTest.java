@@ -38,7 +38,7 @@ class ReadingLogApplicationTest {
     @Test
     void getReadingLog() {
         ReadingLogWithBookDTO readingLogWithBookDTO = new ReadingLogWithBookDTO(1L, "title", "author", "cover",
-            "publisher", Status.READING,
+            "publisher",
             "summary", "note", 5,
             LocalDateTime.now(), LocalDateTime.now());
 
