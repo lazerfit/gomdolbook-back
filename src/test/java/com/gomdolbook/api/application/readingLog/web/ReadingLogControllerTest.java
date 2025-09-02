@@ -51,7 +51,6 @@ class ReadingLogControllerTest {
     @Test
     void getReadingLog() throws Exception {
         ReadingLogWithBookDTO dto = new ReadingLogWithBookDTO(1L, "t", "a", "c", "p",
-            Status.READING,
             "s", "n", 5, LocalDateTime.now(), LocalDateTime.now());
         given(readingLogApplicationService.getReadingLog(1L)).willReturn(dto);
 

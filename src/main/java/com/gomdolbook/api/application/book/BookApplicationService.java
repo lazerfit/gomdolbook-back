@@ -165,7 +165,7 @@ public class BookApplicationService {
     }
 
     @Caching(evict = {
-        @CacheEvict(cacheNames = {"statusCache","readingLogCache"}, key = "@securityService.getCacheKey(#isbn)"),
+        @CacheEvict(cacheNames = "statusCache", key = "@securityService.getCacheKey(#isbn)"),
         @CacheEvict(cacheNames = "finishedBookCalendarData", key = "@securityService.getUserEmailFromSecurityContext()", condition = "#status.equals('FINISHED')"),
         @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey('READING')"),
         @CacheEvict(cacheNames = "libraryCache", key = "@securityService.getCacheKey(#status)", condition = "!#status.equals('READING')")
