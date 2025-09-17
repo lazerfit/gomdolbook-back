@@ -12,10 +12,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class TraceAspect {
 
-    @Pointcut("execution(public * com.gomdolbook.api.service..*(..))")
+    @Pointcut("@within(com.gomdolbook.api.common.config.annotations.DomainService)")
     private void allService() {}
 
-    @Pointcut("execution(public * com.gomdolbook.api.persistence.repository..*(..))")
+    @Pointcut("@within(com.gomdolbook.api.common.config.annotations.DomainRepository)")
     private void allRepository() {}
 
     @Around("allService()")

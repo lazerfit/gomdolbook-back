@@ -9,6 +9,7 @@ import com.gomdolbook.api.application.book.dto.FinishedBookCalendarData;
 import com.gomdolbook.api.application.book.dto.SearchedBookData;
 import com.gomdolbook.api.application.book.dto.StatusData;
 import com.gomdolbook.api.application.user.UserApplicationService;
+import com.gomdolbook.api.common.config.annotations.DomainService;
 import com.gomdolbook.api.common.config.annotations.PreAuthorizeWithContainsUser;
 import com.gomdolbook.api.common.config.annotations.UserCheckAndSave;
 import com.gomdolbook.api.domain.models.book.Book;
@@ -44,6 +45,7 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClientRequest;
 import reactor.util.retry.Retry;
 
+@DomainService
 @PreAuthorizeWithContainsUser
 @Service
 @RequiredArgsConstructor
